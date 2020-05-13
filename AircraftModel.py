@@ -50,3 +50,4 @@ Smcgz = NGnormal*(cgx-NGx)+ Thrust*ThrustArm - MLGnormal*(MLGx-cgx) - DragNG*cgy
 print("Max Thrust [N]:", Thrust)
 print("Max accelaration [m/s^2]:", Thrust/MRW)
 print("Time to top speed [s]:",TaxiSpd/(Thrust/MRW))
+print("Hoi Stijn")
