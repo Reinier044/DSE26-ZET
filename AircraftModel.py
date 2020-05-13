@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 """
 Created on Wed May 13 10:14:36 2020
+Created on Wed May 13 14:53:58 2020
 
 @author: Reinier
+@author: stijn
 """
 import numpy as np
 
@@ -17,6 +19,7 @@ Dfslg   = 4.14      #[m] Fuselage diameter
 Rmlg    = 0.635     #[m] diameter MLG
 MRW     = 97400     #[kg] Maximum ramp weight
 g       = 9.81      #[m/s^2] Great 
+Rvw     = 0.25      #[m] Radius Vehicle Wheel
 
 
 #Variables
@@ -60,5 +63,9 @@ MLGnormal   = (MRW*g)-NGnormal
 Fperwheel = Thrust/6
 Mureq= Fperwheel/(MLGnormalstat/2)
 
+Tmax = MaxThrust/4 *Rvw
+Tmax_axle = 2*Tmax
+
 print("MLGnormal [N]:", MLGnormal)
 print("NGnormal [N]:", NGnormal)
+print("Maximum needed Torque on main wheel axle [Nm]", Tmax_axle)
