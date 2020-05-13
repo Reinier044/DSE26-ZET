@@ -16,7 +16,7 @@ Hfslg   = 6.01      #[m] Fuselage height
 Dfslg   = 4.14      #[m] Fuselage diameter
 Rmlg    = 0.635     #[m] diameter MLG
 MRW     = 97400     #[kg] Maximum ramp weight
-g       = 9.80665   #[m/s^2] Great 
+g       = 9.81      #[m/s^2] Great 
 
 
 #Variables
@@ -34,27 +34,31 @@ cgz = 0
 
 
 #Forces for limit thrust
-NGnormalstat    = 0.048*MRW
-MLGnormalstat   = 0.952*MRW
+NGnormalstat    = 0.048*MRW*g
+MLGnormalstat   = 0.952*MRW*g
 NGnormal        = 0 #[N] Main landing gear normal force
 MLGnormal       = MRW*g*np.cos(Slope) - NGnormal #[N] Main landing gear normal force
 DragNG          = 0 #[N]
 DragMLG         = 0 #[N]
 ThrustArm       = cgy - Rmlg #[m]
-Thrust          = (MLGnormal*(MLGx-cgx) + DragNG*cgy + DragMLG*cgy - NGnormal*(cgx-NGx))/ThrustArm #[N]
+MaxThrust       = (MLGnormal*(MLGx-cgx) + DragNG*cgy + DragMLG*cgy - NGnormal*(cgx-NGx))/ThrustArm #[N]Maximum Force before tipover
 
 
 #Sum of forces and moments
-Sfx         = MRW*g*np.sin(Slope)+ DragNG + DragMLG - Thrust
+Sfx         = MRW*g*np.sin(Slope)+ DragNG + DragMLG - MaxThrust
 Sfy         = NGnormal + MLGnormal - MRW*g*np.cos(Slope)
-Smcgz       = NGnormal*(cgx-NGx)+ Thrust*ThrustArm - MLGnormal*(MLGx-cgx) - DragNG*cgy - DragMLG*cgy
+Smcgz       = NGnormal*(cgx-NGx)+ MaxThrust*ThrustArm - MLGnormal*(MLGx-cgx) - DragNG*cgy - DragMLG*cgy
 
-print("Max Thrust [N]:", Thrust)
-print("Max accelaration [m/s^2]:", Thrust/MRW)
-print("Time to top speed [s]:",TaxiSpd/(Thrust/MRW))
+print("Max Thrust [N]:", MaxThrust)
+print("Max accelaration [m/s^2]:", MaxThrust/MRW)
+print("Time to top speed [s]:",TaxiSpd/(MaxThrust/MRW))
 
+Thrust      = 270000
+NGnormal    = NGnormalstat-(NGnormalstat/391000.95031004713)*Thrust
+MLGnormal   = (MRW*g)-NGnormal
 
 Fperwheel = Thrust/6
 Mureq= Fperwheel/(MLGnormalstat/2)
 
-print("Required friction:", Mureq)
+print("MLGnormal [N]:", MLGnormal)
+print("NGnormal [N]:", NGnormal)
