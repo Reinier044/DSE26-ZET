@@ -11,11 +11,11 @@ import matplotlib.pyplot as plt
 #-------------------Input data-----------------
 
 max_a = 1.3         #Maximum acceleration
-max_d = -1.5        #Maximum deceleration -> should be negative value!
-#max_v = 15.433     #Maximum achievable velocity -> 30 kts
-max_v = 10.29
+max_d = -1.5        #Maximum deceleration -> should be negative valu5.144e!
+max_v = 15.433     #Maximum achievable velocity -> 30 kts
+#max_v = 10.29
 
-v_cr = 10           #Limit on speed on turns (approx 19.4 kts)
+v_cr = 5.144        #Limit on speed on turns (approx 10 kts)
 
 #--------------------Taxiway-------------------
 
