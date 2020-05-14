@@ -70,7 +70,7 @@ ResThrust   = ThrustSetMax-Weightx-DragRoll
 #Calculate min and max force and torques
 Fperwheel = ThrustSetMax/4
 MinTorque = (FrolStat/6) *Rvw
-Torque = ((ThrustSetMax+DragRoll-Weightx)/6) *Rvw
+Torque = ((ThrustSetMax+DragRoll+Weightx)/6) *Rvw
 Tmax_axle = 2*Torque
 Tmin_axle = 2*MinTorque
 
@@ -213,6 +213,7 @@ SectionResForce = np.array([])
 SectionCntrlForce = np.array([])
 BeginTime = 0
 LastAcceleration = 0
+Energy = 0 
 
 #Calculate sections of different acceleration
 i = 1
@@ -234,3 +235,16 @@ for a in SectionAcceleration:
             SectionCntrlForce = np.append(SectionCntrlForce,((MRW*a)+DragRoll))
         else:
             SectionCntrlForce = np.append(SectionCntrlForce,((MRW*a)-DragRoll))
+
+#Calculate req
+i = 0
+while i< len(SectionCntrlForce):
+    if SectionCntrlForce[i]>144900:
+        Energy = Energy + 130*SectionTime[i]
+    elif SectionCntrlForce[i]>19100:
+        Energy = Energy + 13.8*SectionTime[i]
+    i = i + 1
+
+print("Energy needed for taxi TO: ", Energy, "kJ")
+        
+        
