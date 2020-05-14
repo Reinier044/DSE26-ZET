@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 
 #-------------------Input data-----------------
 
-max_a = 1.3         #Maximum acceleration
-max_d = -1.5        #Maximum deceleration -> should be negative valu5.144e!
+max_a = 1.0267     #Maximum acceleration
+max_d = -1.5       #Maximum deceleration -> should be negative valu5.144e!
 max_v = 15.433     #Maximum achievable velocity -> 30 kts
 #max_v = 10.29
 
@@ -141,11 +141,11 @@ for i in range(len(taxiwayid)):
 plt.figure()    
 plt.plot(tarray,varray)
 plt.show()
-
-plt.figure()
-plt.plot(tarray,sarray)
-plt.show()
-
-plt.figure()
-plt.plot(tarray,aarray)
-plt.show()
+#
+#plt.figure()
+#plt.plot(tarray,sarray)
+#plt.show()
+#
+#plt.figure()
+#plt.plot(tarray,aarray)
+#plt.show()
