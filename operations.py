@@ -10,9 +10,9 @@ import matplotlib.pyplot as plt
 
 #-------------------Input data-----------------
 
-max_a = 1.0267     #Maximum acceleration
+max_a = 1.3     #Maximum acceleration
 max_d = -1.5       #Maximum deceleration -> should be negative valu5.144e!
-max_v = 15.433     #Maximum achievable velocity -> 30 kts
+max_v = 12.86     #Maximum achievable velocity -> 30 kts (15.433)
 #max_v = 10.29
 
 v_cr = 5.144        #Limit on speed on turns (approx 10 kts)
