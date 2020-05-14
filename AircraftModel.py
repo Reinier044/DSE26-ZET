@@ -32,6 +32,7 @@ Liftslope   = np.arctan((LiftMLG-LiftNG)/(MLGx-NGx))
 MuRolDry    = 0.02
 MuKinDry    = 0.8 #[-]range of 0.6 - 0.85
 MuKinWet    = 0.5 #[-]range of 0.45 - 0.75
+GearRatio   = 14.95 #
 
 #Calculate cg position
 cgx = MACcg*MAC+XLEMAC
@@ -50,7 +51,6 @@ NGnormal        = 0 #[N] Main landing gear normal force
 MLGnormal       = MRW*g*np.cos(Slope) - NGnormal #[N] Main landing gear normal force
 DragNG          = 0 #[N]
 DragMLG         = 0 #[N]
-
 MaxThrust       = (MLGnormal*(MLGx-cgx) + DragNG*cgy + DragMLG*cgy - NGnormal*(cgx-NGx))/ThrustArm #[N]Maximum Force before tipover
 
 
@@ -70,12 +70,10 @@ Mureq= Fperwheel/(MLGnormalstat/2)
 Frol    = MuRolDry*MLGnormal
 Ffric   = MuKinDry*MLGnormal
 
-Torque = ThrustSet/4 *Rvw
+MinTorque = (Frol/6) *Rvw
+Torque = (ThrustSet/6) *Rvw
 Tmax_axle = 2*Torque
+Tmin_axle = 2*Torque
 
-
-print("MLGnormal [N]:", MLGnormal)
-print("NGnormal [N]:", NGnormal)
-print("Maximum needed Torque on main wheel axle [Nm]", Tmax_axle)
 print("Time to top speed [s]:",TaxiSpd/(ResThrust/MRW))
-print("Max accelaration [m/s^2]:", ResThrust/MRW)
+print("Engine Torque needed @MaxAcceleration:", Tmax_axle/GearRatio)
