@@ -29,6 +29,9 @@ CGfslg      = 1/3 #[%] assumed position of cg wrt fuselage (0 is bottom, 1 is to
 LiftNG      = 0.05 #[m] How high the nosegear is lifted
 LiftMLG     = 0.05 #[m] How high the main landing gear is lifted
 Liftslope   = np.arctan((LiftMLG-LiftNG)/(MLGx-NGx))
+MuRolDry    = 0.02
+MuKinDry    = 0.8 #[-]range of 0.6 - 0.85
+MuKinWet    = 0.5 #[-]range of 0.45 - 0.75
 
 #Calculate cg position
 cgx = MACcg*MAC+XLEMAC
@@ -52,20 +55,22 @@ Sfx         = MRW*g*np.sin(Slope)+ DragNG + DragMLG - MaxThrust
 Sfy         = NGnormal + MLGnormal - MRW*g*np.cos(Slope)
 Smcgz       = NGnormal*(cgx-NGx)+ MaxThrust*ThrustArm - MLGnormal*(MLGx-cgx) - DragNG*cgy - DragMLG*cgy
 
-print("Max Thrust [N]:", MaxThrust)
-print("Max accelaration [m/s^2]:", MaxThrust/MRW)
-print("Time to top speed [s]:",TaxiSpd/(MaxThrust/MRW))
-
-Thrust      = 270000
+Thrust      = 80000
 NGnormal    = NGnormalstat-(NGnormalstat/391000.95031004713)*Thrust
 MLGnormal   = (MRW*g)-NGnormal
 
-Fperwheel = Thrust/6
+Fperwheel = Thrust/4
 Mureq= Fperwheel/(MLGnormalstat/2)
 
-Tmax = MaxThrust/4 *Rvw
-Tmax_axle = 2*Tmax
+Frol    = MuRolDry*MLGnormal
+Ffric   = MuKinDry*MLGnormal
+
+Torque = Thrust/4 *Rvw
+Tmax_axle = 2*Torque
+
 
 print("MLGnormal [N]:", MLGnormal)
 print("NGnormal [N]:", NGnormal)
 print("Maximum needed Torque on main wheel axle [Nm]", Tmax_axle)
+print("Time to top speed [s]:",TaxiSpd/(Thrust/MRW))
+print("Max accelaration [m/s^2]:", Thrust/MRW)
