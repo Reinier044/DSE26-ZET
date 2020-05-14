@@ -40,13 +40,17 @@ cgz = 0
 
 
 #Forces for limit thrust
-NGnormalstat    = 0.048*MRW*g
-MLGnormalstat   = 0.952*MRW*g
+Weightx         = MRW*g*np.sin(Slope)
+Weighty         = MRW*g*np.cos(Slope)
+ThrustArm       = cgy - Rmlg #[m]
+TonSlope        = Weightx
+MLGnormalstat   = (TonSlope*(ThrustArm)+(Weighty*(cgx-NGx)))/((cgx-NGx)+(MLGx-cgx))
+NGnormalstat    = Weighty-MLGnormalstat
 NGnormal        = 0 #[N] Main landing gear normal force
 MLGnormal       = MRW*g*np.cos(Slope) - NGnormal #[N] Main landing gear normal force
 DragNG          = 0 #[N]
 DragMLG         = 0 #[N]
-ThrustArm       = cgy - Rmlg #[m]
+
 MaxThrust       = (MLGnormal*(MLGx-cgx) + DragNG*cgy + DragMLG*cgy - NGnormal*(cgx-NGx))/ThrustArm #[N]Maximum Force before tipover
 
 
@@ -55,22 +59,23 @@ Sfx         = MRW*g*np.sin(Slope)+ DragNG + DragMLG - MaxThrust
 Sfy         = NGnormal + MLGnormal - MRW*g*np.cos(Slope)
 Smcgz       = NGnormal*(cgx-NGx)+ MaxThrust*ThrustArm - MLGnormal*(MLGx-cgx) - DragNG*cgy - DragMLG*cgy
 
-Thrust      = 80000
-NGnormal    = NGnormalstat-(NGnormalstat/391000.95031004713)*Thrust
-MLGnormal   = (MRW*g)-NGnormal
+ThrustSet   = 100000
+ResThrust   = ThrustSet-TonSlope
+NGnormal    = NGnormalstat-(NGnormalstat/391000.95031004713)*ThrustSet
+MLGnormal   = (MRW*np.cos(Slope)*g)-NGnormal
 
-Fperwheel = Thrust/4
+Fperwheel = ThrustSet/4
 Mureq= Fperwheel/(MLGnormalstat/2)
 
 Frol    = MuRolDry*MLGnormal
 Ffric   = MuKinDry*MLGnormal
 
-Torque = Thrust/4 *Rvw
+Torque = ThrustSet/4 *Rvw
 Tmax_axle = 2*Torque
 
 
 print("MLGnormal [N]:", MLGnormal)
 print("NGnormal [N]:", NGnormal)
 print("Maximum needed Torque on main wheel axle [Nm]", Tmax_axle)
-print("Time to top speed [s]:",TaxiSpd/(Thrust/MRW))
-print("Max accelaration [m/s^2]:", Thrust/MRW)
+print("Time to top speed [s]:",TaxiSpd/(ResThrust/MRW))
+print("Max accelaration [m/s^2]:", ResThrust/MRW)
