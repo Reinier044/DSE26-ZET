@@ -7,13 +7,14 @@ Created on Wed May 13 14:53:58 2020
 @author: stijn
 """
 import numpy as np
+import operations as ops
 
 #Size data
 NGx     = 5.07      #[m] Position of NG on x-axis
 MLGx    = 21.97     #[m] Position of MLG on x-axis
 MACcg   = 0.3607    #[%] cg position
-XLEMAC  = 19.342    #[m] 
-MAC     = 4.26      #[m]
+XLEMAC  = 19.611397    #[m] 
+MAC     = 4.29      #[m]
 Hfslg   = 6.01      #[m] Fuselage height
 Dfslg   = 4.14      #[m] Fuselage diameter
 Rmlg    = 0.635     #[m] diameter MLG
@@ -24,7 +25,7 @@ Rvw     = 0.25      #[m] Radius Vehicle Wheel
 
 #Variables
 TaxiSpd     = 12.86 #[m/s]
-Slope       = 0.0300196631 #[rad] 0.0300196631 max (aka 3%)
+Slope       = 0.0 #[rad] 0.0300196631 max (aka 3%)
 CGfslg      = 1/3 #[%] assumed position of cg wrt fuselage (0 is bottom, 1 is top)
 LiftNG      = 0.05 #[m] How high the nosegear is lifted
 LiftMLG     = 0.05 #[m] How high the main landing gear is lifted
@@ -76,4 +77,8 @@ Tmax_axle = 2*Torque
 Tmin_axle = 2*Torque
 
 print("Time to top speed [s]:",TaxiSpd/(ResThrust/MRW))
+print("Max accelaration [m/s^2]", ResThrust/MRW )
 print("Engine Torque needed @MaxAcceleration:", Tmax_axle/GearRatio)
+
+time = ops.tarray
+accelaration = ops.aarray
