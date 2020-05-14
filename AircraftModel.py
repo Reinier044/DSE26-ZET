@@ -82,3 +82,9 @@ print("Engine Torque needed @MaxAcceleration:", Tmax_axle/GearRatio)
 
 time = ops.tarray
 accelaration = ops.aarray
+
+i = 0
+while i in accelaration:
+    if accelaration[i] == 0:
+        print(accelaration[i])
+    i = i +1
