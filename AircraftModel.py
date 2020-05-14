@@ -24,7 +24,6 @@ Rvw     = 0.25      #[m] Radius Vehicle Wheel
 
 #Variables
 ThrustSetMax    = 145000 #[N]Thrust setting
-TaxiSpd         = 12.86 #[m/s]
 Slope           = 0.0 #[rad] 0.0300196631 max (aka 3%)
 CGfslg          = 1/3 #[%] assumed position of cg wrt fuselage (0 is bottom, 1 is top)
 LiftNG          = 0.05 #[m] How high the nosegear is lifted
@@ -34,9 +33,8 @@ MuRolDynDry     = 0.02 #[-]Dynamic friction coefficient dry surface
 MuKinDry        = 0.8 #[-]range of 0.6 - 0.85
 MuKinWet        = 0.5 #[-]range of 0.45 - 0.75
 GearRatio       = 14.95 #Gear ratio
-
 max_d           = -1.5 #Maximum deceleration -> should be negative valu5.144e!
-max_v           = 12.86 #Maximum achievable velocity -> 30 kts
+max_v           = 12.86 #Maximum achievable velocity -> 30 kts (15.433)
 v_cr            = 5.144 #Limit on speed on turns (approx 10 kts)
 std_taxtime     = 297.56*2.8 #time it takes normal taxi operations (20kts) to reach polderbaan. Pushback excluded 
 
@@ -236,7 +234,7 @@ for a in SectionAcceleration:
         else:
             SectionCntrlForce = np.append(SectionCntrlForce,((MRW*a)-DragRoll))
 
-#Calculate req
+#Calculate energy
 i = 0
 while i< len(SectionCntrlForce):
     if SectionCntrlForce[i]>144900:
