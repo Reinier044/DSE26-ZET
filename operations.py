@@ -51,7 +51,7 @@ for i in range(len(taxiwayid)):
     
     if taxiwayid[i]=='st':                                  #If we have straight part   
         
-        print('The ',i,'th part is a straight part')
+        #print('The ',i,'th part is a straight part')
         indstart = ind                                      #Starting index in while loop
         v = varray[indstart]                                #Starting velocity in straight part
             
@@ -75,7 +75,7 @@ for i in range(len(taxiwayid)):
             
             #Braking
             t_braking = (v_cr - v)/max_d
-            print('Is the time for braking,',t_braking,', reasonable?') 
+            #print('Is the time for braking,',t_braking,', reasonable?') 
             
             indnew = ind - int(round(t_braking/dt))         #Go back in time
             a = max_d                                       #Use maximum deceleration for braking
@@ -108,11 +108,11 @@ for i in range(len(taxiwayid)):
             
             ind = indnew                                    #Correction for extra time
         
-        print('End velocity is', varray[ind], 'and end time is', tarray[ind])
+        #print('End velocity is', varray[ind], 'and end time is', tarray[ind])
              
     if taxiwayid[i]=='cr':                          #If we have a corner
         
-        print('The ',i,'th part is a corner')
+        #print('The ',i,'th part is a corner')
         indstart = ind                              #Starting index in while loop
         
         v = varray[indstart]                        #Starting velocity in the turn
@@ -136,7 +136,7 @@ for i in range(len(taxiwayid)):
             varray = np.append(varray,v)
             aarray = np.append(aarray,a)
             
-        print('End velocity is', varray[ind], 'and end time is', tarray[ind])
+        #print('End velocity is', varray[ind], 'and end time is', tarray[ind])
 
 plt.figure()    
 plt.plot(tarray,varray)
