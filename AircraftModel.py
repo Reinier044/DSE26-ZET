@@ -22,9 +22,10 @@ g           = 9.81      #[m/s^2] Great
 
 
 #Variables
-ThrustSetMax    = 250000        #[N]Thrust setting
+DesAccel        = 1.3          #[m/s^2]Desired acceleration
+ThrustSetMax    = 200000        #[N]Thrust setting
 Rvw             = 0.25          #[m] Radius Vehicle Wheel
-MLGTugW         = 32400         #[kg] estimated tug weight
+MLGTugW         = 15400         #[kg] estimated tug weight
 NGTugW          = 5400          #[kg] estimated nose gear tug weight
 Slope           = 0.0           #[rad] 0.0300196631 max (aka 3%)
 CGfslg          = 1/3           #[%] assumed position of cg wrt fuselage (0 is bottom, 1 is top)
@@ -34,12 +35,12 @@ MuRolStatDry    = 0.02          #[-]Static friction coefficient dry surface
 MuRolDynDry     = 0.02          #[-]Dynamic friction coefficient dry surface
 MuKinDry        = 0.8           #[-]range of 0.6 - 0.85
 MuKinWet        = 0.5           #[-]range of 0.45 - 0.75
-GearRatio       = 14.95         #Gear ratio
+GearRatio       = 10.4          #Gear ratio
 max_d           = -1.5          #Maximum deceleration -> should be negative valu5.144e!
 max_v           = 12.86         #Maximum achievable velocity -> 30 kts (15.433)
 v_cr            = 5.144         #Limit on speed on turns (approx 10 kts)
 std_taxtime     = 297.56*2.8    #time it takes normal taxi operations (20kts) to reach polderbaan. Pushback excluded
-Taxi_with_ac    = "no"         #Taxi with aircraft attached (yes) or not (anything else)
+Taxi_with_ac    = "yes"         #Taxi with aircraft attached (yes) or not (anything else)
 MaxPower        = 250           #[kW] Selected engine MaxPower
 
 
@@ -57,6 +58,7 @@ else:
     
 
 #Forces for limit thrust
+ResThrust       = MRW*DesAccel 
 Weightx         = MRW*g*np.sin(Slope)
 Weighty         = MRW*g*np.cos(Slope)
 ThrustArm       = cgy - Rmlg #[m]
@@ -67,28 +69,24 @@ MLGnormal       = MRW*g*np.cos(Slope) - NGnormal #[N] Main landing gear normal f
 MaxThrust       = (MLGnormal*(MLGx-cgx) - NGnormal*(cgx-NGx))/ThrustArm #[N]Maximum Force before tipover (+ DragNG*cgy + DragMLG*cgy)
 
 #Calculate normal Forces
-NGnormal    = NGnormalstat-(NGnormalstat/391000.95031004713)*ThrustSetMax
+NGnormal    = NGnormalstat-(NGnormalstat/MaxThrust)*ResThrust
 MLGnormal   = (MRW*np.cos(Slope)*g)-NGnormal
 
 #Calculate drag
-FrolStat    = MuRolStatDry*MLGnormal #[N] for static friction
+FrolStat    = MuRolStatDry*(MLGnormal+NGnormal) #[N] for static friction
 DragNG      = MuRolDynDry*NGnormal #[N] for dynamic friction MLG
 DragMLG     = MuRolDynDry*MLGnormal #[N] for dynamic friction NG
 DragRoll    = DragNG + DragMLG
-ResThrust   = ThrustSetMax-Weightx-DragRoll
+ThrustSetMax= ResThrust+Weightx+DragRoll #[N] Max thrust to be set
 
 #Calculate min and max force and torques
 Fperwheel = ThrustSetMax/4
 MinTorque = (FrolStat/6) *Rvw
-Torque = ((ThrustSetMax+DragRoll+Weightx)/6) *Rvw
+Torque = (ThrustSetMax/6) *Rvw
 Tmax_axle = 2*Torque
 Tmin_axle = 2*MinTorque
 
-print("Time to top speed [s]:",max_v/(ResThrust/MRW))
-print("Max accelaration [m/s^2]", ResThrust/MRW )
-print("Engine Torque needed @MaxAcceleration:", Tmax_axle/GearRatio)
-
-
+print("Engine Torque (max) needed:", Tmax_axle/GearRatio)
 
 #Run taxi simulation
 #--------------------PART 2---------------------------------------------------
