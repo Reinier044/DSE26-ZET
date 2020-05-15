@@ -9,40 +9,52 @@ Created on Wed May 13 14:53:58 2020
 import numpy as np
 
 #Size data
-NGx     = 5.07      #[m] Position of NG on x-axis
-MLGx    = 21.97     #[m] Position of MLG on x-axis
-MACcg   = 0.3607    #[%] cg position
-XLEMAC  = 19.611397    #[m] 
-MAC     = 4.29      #[m]
-Hfslg   = 6.01      #[m] Fuselage height
-Dfslg   = 4.14      #[m] Fuselage diameter
-Rmlg    = 0.635     #[m] diameter MLG
-MRW     = 97400     #[kg] Maximum ramp weight
-g       = 9.81      #[m/s^2] Great 
-Rvw     = 0.25      #[m] Radius Vehicle Wheel
+NGx         = 5.07      #[m] Position of NG on x-axis
+MLGx        = 21.97     #[m] Position of MLG on x-axis
+MACcg       = 0.3607    #[%] cg position
+XLEMAC      = 19.611397 #[m] 
+MAC         = 4.29      #[m]
+Hfslg       = 6.01      #[m] Fuselage height
+Dfslg       = 4.14      #[m] Fuselage diameter
+Rmlg        = 0.635     #[m] diameter MLG
+MRW         = 97400     #[kg] Maximum ramp weight
+g           = 9.81      #[m/s^2] Great 
 
 
 #Variables
-ThrustSetMax    = 145000 #[N]Thrust setting
-Slope           = 0.0 #[rad] 0.0300196631 max (aka 3%)
-CGfslg          = 1/3 #[%] assumed position of cg wrt fuselage (0 is bottom, 1 is top)
-LiftNG          = 0.05 #[m] How high the nosegear is lifted
-LiftMLG         = 0.05 #[m] How high the main landing gear is lifted
-MuRolStatDry    = 0.02 #[-]Static friction coefficient dry surface
-MuRolDynDry     = 0.02 #[-]Dynamic friction coefficient dry surface
-MuKinDry        = 0.8 #[-]range of 0.6 - 0.85
-MuKinWet        = 0.5 #[-]range of 0.45 - 0.75
-GearRatio       = 14.95 #Gear ratio
-max_d           = -1.5 #Maximum deceleration -> should be negative valu5.144e!
-max_v           = 12.86 #Maximum achievable velocity -> 30 kts (15.433)
-v_cr            = 5.144 #Limit on speed on turns (approx 10 kts)
-std_taxtime     = 297.56*2.8 #time it takes normal taxi operations (20kts) to reach polderbaan. Pushback excluded 
+ThrustSetMax    = 250000        #[N]Thrust setting
+Rvw             = 0.25          #[m] Radius Vehicle Wheel
+MLGTugW         = 32400         #[kg] estimated tug weight
+NGTugW          = 5400          #[kg] estimated nose gear tug weight
+Slope           = 0.0           #[rad] 0.0300196631 max (aka 3%)
+CGfslg          = 1/3           #[%] assumed position of cg wrt fuselage (0 is bottom, 1 is top)
+LiftNG          = 0.05          #[m] How high the nosegear is lifted
+LiftMLG         = 0.05          #[m] How high the main landing gear is lifted
+MuRolStatDry    = 0.02          #[-]Static friction coefficient dry surface
+MuRolDynDry     = 0.02          #[-]Dynamic friction coefficient dry surface
+MuKinDry        = 0.8           #[-]range of 0.6 - 0.85
+MuKinWet        = 0.5           #[-]range of 0.45 - 0.75
+GearRatio       = 14.95         #Gear ratio
+max_d           = -1.5          #Maximum deceleration -> should be negative valu5.144e!
+max_v           = 12.86         #Maximum achievable velocity -> 30 kts (15.433)
+v_cr            = 5.144         #Limit on speed on turns (approx 10 kts)
+std_taxtime     = 297.56*2.8    #time it takes normal taxi operations (20kts) to reach polderbaan. Pushback excluded
+Taxi_with_ac    = "no"         #Taxi with aircraft attached (yes) or not (anything else)
+MaxPower        = 250           #[kW] Selected engine MaxPower
+
 
 #Calculate cg position
 Liftslope   = np.arctan((LiftMLG-LiftNG)/(MLGx-NGx))
 cgx         = MACcg*MAC+XLEMAC
 cgy         = CGfslg*Dfslg+Hfslg-Dfslg+(LiftNG+(np.tan(Liftslope)*(cgx-NGx)))
 cgz         = 0
+
+if Taxi_with_ac == "yes":
+    MRW = MRW + 2*MLGTugW + NGTugW
+else:
+    MRW = 2*MLGTugW + NGTugW
+    MaxPower = 0.5*MaxPower
+    
 
 #Forces for limit thrust
 Weightx         = MRW*g*np.sin(Slope)
@@ -237,10 +249,10 @@ for a in SectionAcceleration:
 #Calculate energy
 i = 0
 while i< len(SectionCntrlForce):
-    if SectionCntrlForce[i]>144900:
-        Energy = Energy + 130*SectionTime[i]
-    elif SectionCntrlForce[i]>19100:
-        Energy = Energy + 13.8*SectionTime[i]
+    if SectionCntrlForce[i]>ThrustSetMax-100:
+        Energy = Energy + MaxPower*SectionTime[i]
+    elif SectionCntrlForce[i]>DragRoll-100:
+        Energy = Energy + (SectionCntrlForce[i]/ThrustSetMax)*MaxPower*SectionTime[i]
     i = i + 1
 
 print("Energy needed for taxi TO: ", Energy, "kJ")
