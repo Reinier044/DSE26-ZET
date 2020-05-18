@@ -22,7 +22,7 @@ g           = 9.81      #[m/s^2] Great
 
 
 #Variables
-DesAccel        = 1.3          #[m/s^2]Desired acceleration
+DesAccel        = 1.3           #[m/s^2]Desired acceleration
 ThrustSetMax    = 200000        #[N]Thrust setting
 Rvw             = 0.25          #[m] Radius Vehicle Wheel
 MLGTugW         = 15400         #[kg] estimated tug weight
@@ -35,13 +35,14 @@ MuRolStatDry    = 0.02          #[-]Static friction coefficient dry surface
 MuRolDynDry     = 0.02          #[-]Dynamic friction coefficient dry surface
 MuKinDry        = 0.8           #[-]range of 0.6 - 0.85
 MuKinWet        = 0.5           #[-]range of 0.45 - 0.75
-GearRatio       = 10.4          #Gear ratio
+GearRatio       = 14.95         #Gear ratio
 max_d           = -1.5          #Maximum deceleration -> should be negative valu5.144e!
-max_v           = 12.86         #Maximum achievable velocity -> 30 kts (15.433)
+max_v           = 12.861        #Maximum achievable velocity -> 30 kts (15.433), 25 kts (12.86)
 v_cr            = 5.144         #Limit on speed on turns (approx 10 kts)
 std_taxtime     = 297.56*2.8    #time it takes normal taxi operations (20kts) to reach polderbaan. Pushback excluded
 Taxi_with_ac    = "yes"         #Taxi with aircraft attached (yes) or not (anything else)
 MaxPower        = 250           #[kW] Selected engine MaxPower
+EngineRPM       = 1491          #RPM for selected engine
 
 
 #Calculate cg position
@@ -81,10 +82,13 @@ ThrustSetMax= ResThrust+Weightx+DragRoll #[N] Max thrust to be set
 
 #Calculate min and max force and torques
 Fperwheel = ThrustSetMax/4
-MinTorque = (FrolStat/6) *Rvw
-Torque = (ThrustSetMax/6) *Rvw
-Tmax_axle = 2*Torque
-Tmin_axle = 2*MinTorque
+MinTorque = (FrolStat/6) *Rvw #Torque per wheel
+Torque = (ThrustSetMax/6) *Rvw #Torque per wheel
+Tmax_axle = 2*Torque #Max torque per engine
+Tmin_axle = 2*MinTorque #Min torque per engine
+
+#Calculate gearing ratio's required
+GearTopSpeed = EngineRPM/((max_v/(2*np.pi*Rvw))*60) #Gear ratio for top speed
 
 print("Engine Torque (max) needed:", Tmax_axle/GearRatio)
 
@@ -244,7 +248,7 @@ for a in SectionAcceleration:
         else:
             SectionCntrlForce = np.append(SectionCntrlForce,((MRW*a)-DragRoll))
 
-#Calculate energy
+#Calculate energy for 1 car
 i = 0
 while i< len(SectionCntrlForce):
     if SectionCntrlForce[i]>ThrustSetMax-100:
@@ -254,5 +258,6 @@ while i< len(SectionCntrlForce):
     i = i + 1
 
 print("Energy needed for taxi TO: ", Energy, "kJ")
-        
+
+
         
