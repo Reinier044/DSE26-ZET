@@ -10,10 +10,10 @@ import matplotlib.pyplot as plt
 
 #-------------------Input data-----------------
 
-max_a = 1.3         #Maximum acceleration
-max_d = -1.5        #Maximum deceleration -> should be negative valu5.144e!
-max_v = 15.433     #Maximum achievable velocity -> 30 kts
-#max_v = 10.29
+max_a = 0.5         #Maximum acceleration achieved by ZET-system [m/s^2]
+max_d = -1.5        #Maximum deceleration achieved by ZET-system -> should be negative value! [m/s^2]
+#max_v = 15.433     #Maximum achievable velocity achieved by ZET-system -> 30 kts is maximum for A321 [m/s]
+max_v = 12.861
 
 v_cr = 5.144        #Limit on speed on turns (approx 10 kts)
 
@@ -21,8 +21,10 @@ v_cr = 5.144        #Limit on speed on turns (approx 10 kts)
 
 taxiway = np.array([[21.33,35.52,31.68,43.17,105.66,60.91,1383,120,950,80,60],
                     [0,38.8,0,44.8,0,49.5,0,105,0,43.6,52.6]])
+
 #First row is distance of straight part or corner
 #If corner, second row gives turn radius -> otherwise 0
+#In this code, the second row in the array is never used. However might be useful to make it more accurate.
 
 taxiwayid = np.array(['st','cr','st','cr','st','cr','st','cr','st','cr','cr'])
 #Taxiwayid show whether we have straight part (st) or corner (cr)
