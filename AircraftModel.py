@@ -64,31 +64,27 @@ ThrustArm       = cgy - Rmlg  #[m]Arm for thrust application (y-direction)
 ResThrust       = MRW*DesAccel  #[N] Resultant force for the desired acceleration                                            
 Weightx         = MRW*g*np.sin(Slope) #[N] Weight in x direction (due to slope)
 Weighty         = MRW*g*np.cos(Slope) #[N] Weight in y direction (due to slope)
-MLGnormalstat   = (Weightx*(ThrustArm)+(Weighty*(cgx-NGx)))/((cgx-NGx)+(MLGx-cgx))  #[N] Normal force in static situation. Verified with airport planing manual
-NGnormalstat    = Weighty-MLGnormalstat                                             #[N] Normal force in static situation. Verified with airport planing manual
+MLGnormalstat   = (Weightx*(ThrustArm)+(Weighty*(cgx-NGx)))/((cgx-NGx)+(MLGx-cgx))  #[N] MLG Normal force in static situation. Verified with airport planing manual
+NGnormalstat    = Weighty-MLGnormalstat                                             #[N] NG Normal force in static situation. Verified with airport planing manual
 NGnormal        = 0                                                                 #[N] Main landing gear normal force at tipover. 0 by definition
 MLGnormal       = Weighty                                                           #[N] Main landing gear normal force at tipover. 
 MaxThrust       = (MLGnormal*(MLGx-cgx) - NGnormal*(cgx-NGx))/ThrustArm             #[N]Maximum Force before tipover (+ DragNG*cgy + DragMLG*cgy)
 
 #Calculate normal Forces
-NGnormal    = NGnormalstat-(NGnormalstat/MaxThrust)*ResThrust                       #
-MLGnormal   = Weighty-NGnormal
-
-print(NGnormal)
-print(MLGnormal)
-print(NGnormal+MLGnormal-Weighty)
+NGnormal    = NGnormalstat-(NGnormalstat/MaxThrust)*ResThrust   #[N] NG Normal force for max acceleration.
+MLGnormal   = Weighty-NGnormal                                  #[N] MLG Normal force for max acceleration
 
 #Calculate drag
-FrolStat    = MuRolStatDry*(MLGnormal+NGnormal) #[N] for static friction
-DragNG      = MuRolDynDry*NGnormal              #[N] for dynamic friction MLG
-DragMLG     = MuRolDynDry*MLGnormal             #[N] for dynamic friction NG
-DragRoll    = DragNG + DragMLG                  #[N] Total drag
+FrolStat    = MuRolStatDry*(MLGnormal+NGnormal) #[N] Static friction force
+DragNG      = MuRolDynDry*NGnormal              #[N] Dynamic friction MLG
+DragMLG     = MuRolDynDry*MLGnormal             #[N] Dynamic friction NG
+DragRoll    = DragNG + DragMLG                  #[N] Total drag during roll
 ThrustSetMax= ResThrust+Weightx+DragRoll        #[N] Max thrust to be set
 
 #Calculate min and max force and torques
-MinTorque = (FrolStat/wheels) *Rvw          #[N*m] Torque per wheel
-Torque = (ThrustSetMax/wheels) *Rvw         #[N*m] Torque per wheel
-Tmax_axle = 2*Torque                        #[N*m] Max torque per engine
+MinTorque = (FrolStat/wheels) *Rvw          #[N*m] Minimal torque per wheel
+Torque = (ThrustSetMax/wheels) *Rvw         #[N*m] Torque per wheel to get resultant force
+Tmax_axle = 2*Torque                        #[N*m] Max torque per engine to get resultant force
 Tmin_axle = 2*MinTorque                     #[N*m] Min torque per engine
 
 #Calculate gearing ratio's required
@@ -102,16 +98,19 @@ max_a = ResThrust/MRW     #Maximum acceleration
 
 taxiway = np.array([[21.33,35.52,31.68,43.17,105.66,60.91,1383,120,950,80,60],
                     [0,38.8,0,44.8,0,49.5,0,105,0,43.6,52.6]])
+
 #First row is distance of straight part or corner
 #If corner, second row gives turn radius -> otherwise 0
+#In this code, the second row in the array is never used. However might be useful to make it more accurate.
 
 taxiwayid = np.array(['st','cr','st','cr','st','cr','st','cr','st','cr','cr'])
 #Taxiwayid show whether we have straight part (st) or corner (cr)
 
+#--------------------Code----------------------
 
 #Simulation parameters
 t = 0               #Starting time
-dt = 0.01          #Time step
+dt = 0.01           #Time step
 
 #Initial conditions
 v = 0               #Starting velocity
@@ -131,7 +130,6 @@ for i in range(len(taxiwayid)):
     
     if taxiwayid[i]=='st':                                  #If we have straight part   
         
-        #print('The ',i,'th part is a straight part')
         indstart = ind                                      #Starting index in while loop
         v = varray[indstart]                                #Starting velocity in straight part
             
@@ -141,6 +139,7 @@ for i in range(len(taxiwayid)):
             v = v + a*dt 
             if v > max_v:
                 v = max_v
+                a = 0                                       #If maximum speed is achieved, it does not need to accelerate anymore
             s = s + v*dt
             t = t + dt
             ind = ind + 1
@@ -155,9 +154,12 @@ for i in range(len(taxiwayid)):
             
             #Braking
             t_braking = (v_cr - v)/max_d
-            #print('Is the time for braking,',t_braking,', reasonable?') 
             
-            indnew = ind - int(round(t_braking/dt))         #Go back in time
+            indnew = ind - int(round(t_braking/dt))         #Go back in time-> this is the index where we will start braking
+
+            if indnew<0:                                    #Added after performing verification for high accelerations
+                indnew=0
+
             a = max_d                                       #Use maximum deceleration for braking
             
             v = varray[indnew]                          #Starting value in this while loop
@@ -192,7 +194,6 @@ for i in range(len(taxiwayid)):
              
     if taxiwayid[i]=='cr':                          #If we have a corner
         
-        #print('The ',i,'th part is a corner')
         indstart = ind                              #Starting index in while loop
         
         v = varray[indstart]                        #Starting velocity in the turn
@@ -215,6 +216,7 @@ for i in range(len(taxiwayid)):
             sarray = np.append(sarray,s)
             varray = np.append(varray,v)
             aarray = np.append(aarray,a)
+            
 
 print("Delta taxi time [s] to Polderbaan: ",(tarray[-1]*2.8)-std_taxtime )
 #-----------------------------------------------------------------------------

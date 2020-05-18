@@ -17,7 +17,7 @@ max_v = 12.861
 
 v_cr = 5.144        #Limit on speed on turns (approx 10 kts) [m/s]
 
-max_a = 10
+max_a = 0.3
 
 #--------------------Taxiway-------------------
 
