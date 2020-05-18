@@ -10,10 +10,10 @@ import matplotlib.pyplot as plt
 
 #-------------------Input data-----------------
 
-max_a = 0.5         #Maximum acceleration achieved by ZET-system [m/s^2]
-max_d = -1.5        #Maximum deceleration achieved by ZET-system -> should be negative value! [m/s^2]
-#max_v = 15.433     #Maximum achievable velocity achieved by ZET-system -> 30 kts is maximum for A321 [m/s]
-max_v = 12.861
+max_a = 1.295     #Maximum acceleration
+max_d = -1.5       #Maximum deceleration -> should be negative valu5.144e!
+max_v = 12.86     #Maximum achievable velocity -> 30 kts (15.433)
+#max_v = 10.29
 
 v_cr = 5.144        #Limit on speed on turns (approx 10 kts)
 
@@ -21,10 +21,8 @@ v_cr = 5.144        #Limit on speed on turns (approx 10 kts)
 
 taxiway = np.array([[21.33,35.52,31.68,43.17,105.66,60.91,1383,120,950,80,60],
                     [0,38.8,0,44.8,0,49.5,0,105,0,43.6,52.6]])
-
 #First row is distance of straight part or corner
 #If corner, second row gives turn radius -> otherwise 0
-#In this code, the second row in the array is never used. However might be useful to make it more accurate.
 
 taxiwayid = np.array(['st','cr','st','cr','st','cr','st','cr','st','cr','cr'])
 #Taxiwayid show whether we have straight part (st) or corner (cr)
@@ -53,7 +51,7 @@ for i in range(len(taxiwayid)):
     
     if taxiwayid[i]=='st':                                  #If we have straight part   
         
-        print('The ',i,'th part is a straight part')
+        #print('The ',i,'th part is a straight part')
         indstart = ind                                      #Starting index in while loop
         v = varray[indstart]                                #Starting velocity in straight part
             
@@ -77,7 +75,7 @@ for i in range(len(taxiwayid)):
             
             #Braking
             t_braking = (v_cr - v)/max_d
-            print('Is the time for braking,',t_braking,', reasonable?') 
+            #print('Is the time for braking,',t_braking,', reasonable?') 
             
             indnew = ind - int(round(t_braking/dt))         #Go back in time
             a = max_d                                       #Use maximum deceleration for braking
@@ -110,11 +108,11 @@ for i in range(len(taxiwayid)):
             
             ind = indnew                                    #Correction for extra time
         
-        print('End velocity is', varray[ind], 'and end time is', tarray[ind])
+        #print('End velocity is', varray[ind], 'and end time is', tarray[ind])
              
     if taxiwayid[i]=='cr':                          #If we have a corner
         
-        print('The ',i,'th part is a corner')
+        #print('The ',i,'th part is a corner')
         indstart = ind                              #Starting index in while loop
         
         v = varray[indstart]                        #Starting velocity in the turn
@@ -138,16 +136,16 @@ for i in range(len(taxiwayid)):
             varray = np.append(varray,v)
             aarray = np.append(aarray,a)
             
-        print('End velocity is', varray[ind], 'and end time is', tarray[ind])
+        #print('End velocity is', varray[ind], 'and end time is', tarray[ind])
 
 plt.figure()    
 plt.plot(tarray,varray)
 plt.show()
-
-plt.figure()
-plt.plot(tarray,sarray)
-plt.show()
-
-plt.figure()
-plt.plot(tarray,aarray)
-plt.show()
+#
+#plt.figure()
+#plt.plot(tarray,sarray)
+#plt.show()
+#
+#plt.figure()
+#plt.plot(tarray,aarray)
+#plt.show()
