@@ -27,7 +27,7 @@ v_cr = 5.144        #Limit on speed on turns (approx 10 kts) [m/s]
 
 #First row is distance of straight part or corner
 #If corner, second row gives turn radius -> otherwise 0
-#In this code, the second row in the array is never used. However might be useful to make it more accurate.
+#In this code, the second row in the array is never used. However might be useful to make it more accurate
 
 #Taxiway from D14 to runway 36C
 #taxiway = np.array([[21.33,35.52,31.68,43.17,105.66,60.91,1383,120,950,80,60],
