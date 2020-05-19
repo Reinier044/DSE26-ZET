@@ -12,18 +12,17 @@ import numpy as np
 NGx         = 5.07      #[m] Position of NG on x-axis
 MLGx        = 21.97     #[m] Position of MLG on x-axis
 MACcg       = 0.3607    #[%] cg position
-XLEMAC      = 19.611397 #[m] 
-MAC         = 4.29      #[m]
+XLEMAC      = 19.611397 #[m] X Position mean aerodynamic chord
+MAC         = 4.29      #[m] Length mean aerodynamic chord
 Hfslg       = 6.01      #[m] Fuselage height
 Dfslg       = 4.14      #[m] Fuselage diameter
 Rmlg        = 0.635     #[m] diameter MLG
 MRW         = 97400     #[kg] Maximum ramp weight
-g           = 9.81      #[m/s^2] Great 
+g           = 9.81      #[m/s^2] Gravity 
 
 
 #Variables
 DesAccel        = 1.3           #[m/s^2]Desired acceleration
-ThrustSetMax    = 200000        #[N]Thrust setting
 Rvw             = 0.25          #[m] Radius Vehicle Wheel
 MLGTugW         = 15000         #[kg] estimated tug weight
 NGTugW          = 15000         #[kg] estimated nose gear tug weight
@@ -35,13 +34,14 @@ MuRolStatDry    = 0.02          #[-]Static friction coefficient dry surface
 MuRolDynDry     = 0.02          #[-]Dynamic friction coefficient dry surface
 MuKinDry        = 0.8           #[-]range of 0.6 - 0.85
 MuKinWet        = 0.5           #[-]range of 0.45 - 0.75
-wheels          = 6             #Number of wheels on driving axles
+NumEngines      = 3             #Number of engines
+NumWheels       = 6             #Number of wheels on driving axles
 GearRatio       = 14.95         #Gear ratio
 max_d           = -1.5          #Maximum deceleration -> should be negative valu5.144e!
 max_v           = 12.861        #Maximum achievable velocity -> 30 kts (15.433), 25 kts (12.86)
 v_cr            = 5.144         #Limit on speed on turns (approx 10 kts)
-std_taxtime     = 297.56*2.8    #time it takes normal taxi operations (20kts) to reach polderbaan. Pushback excluded
-Taxi_with_ac    = "yes"         #Taxi with aircraft attached (yes) or not (anything else)
+std_taxtime     = 844.739       #time it takes normal taxi operations (25kts) to reach polderbaan. Pushback excluded
+Taxi_with_ac    = "no"         #Taxi with aircraft attached (yes) or not (anything else)
 MaxPower        = 250           #[kW] Selected engine MaxPower
 EngineRPM       = 1491          #RPM for selected engine
 
@@ -82,10 +82,10 @@ DragRoll    = DragNG + DragMLG                  #[N] Total drag during roll
 ThrustSetMax= ResThrust+Weightx+DragRoll        #[N] Max thrust to be set
 
 #Calculate min and max force and torques
-MinTorque = (FrolStat/wheels) *Rvw          #[N*m] Minimal torque per wheel
-Torque = (ThrustSetMax/wheels) *Rvw         #[N*m] Torque per wheel to get resultant force
-Tmax_axle = 2*Torque                        #[N*m] Max torque per engine to get resultant force
-Tmin_axle = 2*MinTorque                     #[N*m] Min torque per engine
+MinTorque = (FrolStat/NumWheels) *Rvw          #[N*m] Minimal torque per wheel
+Torque = (ThrustSetMax/NumWheels) *Rvw         #[N*m] Torque per wheel to get resultant force
+Tmax_axle = (NumWheels/NumEngines)*Torque      #[N*m] Max torque per engine to get resultant force
+Tmin_axle = (NumWheels/NumEngines)*MinTorque   #[N*m] Min torque per engine
 
 #Calculate gearing ratio's required
 GearTopSpeed = EngineRPM/((max_v/(2*np.pi*Rvw))*60) #Gear ratio for top speed
@@ -94,19 +94,26 @@ print("Engine Torque (max) needed :", Tmax_axle/GearRatio)
 
 #Run taxi simulation
 #--------------------PART 2---------------------------------------------------
-max_a = ResThrust/MRW     #Maximum acceleration
+max_a = DesAccel     #Maximum acceleration
 
-taxiway = np.array([[21.33,35.52,31.68,43.17,105.66,60.91,1383,120,950,80,60],
-                    [0,38.8,0,44.8,0,49.5,0,105,0,43.6,52.6]])
+#Taxiway from D14 to runway 36C
+#taxiway = np.array([[21.33,35.52,31.68,43.17,105.66,60.91,1383,120,950,80,60],
+#                    [0,38.8,0,44.8,0,49.5,0,105,0,43.6,52.6]])
 
+#Taxiway from D14 to Polderbaan
+taxiway = np.array([[21.33,35.52,31.68,43.17,105.66,60.91,1383,120,754,140,893,70,210,40,130,160,2140,130,1690,150,360],
+                    [0,38.8,0,44.8,0,49.5,0,105,0,75.8,0,90.6,0,94,0,101.5,0,172,0,107.5,0]])
+
+#Taxiwayid show whether we have straight part (st) or corner (cr)
+
+#Taxiway ID from D14 to runway 36C
+#taxiwayid = np.array(['st','cr','st','cr','st','cr','st','cr','st','cr','cr'])
+
+#Taxiway ID from D14 to Polderbaan
+taxiwayid = np.array(['st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st'])
 #First row is distance of straight part or corner
 #If corner, second row gives turn radius -> otherwise 0
 #In this code, the second row in the array is never used. However might be useful to make it more accurate.
-
-taxiwayid = np.array(['st','cr','st','cr','st','cr','st','cr','st','cr','cr'])
-#Taxiwayid show whether we have straight part (st) or corner (cr)
-
-#--------------------Code----------------------
 
 #Simulation parameters
 t = 0               #Starting time
@@ -218,7 +225,7 @@ for i in range(len(taxiwayid)):
             aarray = np.append(aarray,a)
             
 
-print("Delta taxi time [s] to Polderbaan: ",(tarray[-1]*2.8)-std_taxtime )
+print("Delta taxi time [s] to Polderbaan: ",(tarray[-1])-std_taxtime )
 #-----------------------------------------------------------------------------
 time = tarray
 acceleration = aarray
@@ -264,6 +271,7 @@ while i< len(SectionCntrlForce):
     i = i + 1
 
 print("Energy needed for taxi (single vehicle): ", Energy/1000, "[mJ]")
+
 
 
         
