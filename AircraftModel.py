@@ -90,7 +90,7 @@ Tmin_axle = 2*MinTorque                     #[N*m] Min torque per engine
 #Calculate gearing ratio's required
 GearTopSpeed = EngineRPM/((max_v/(2*np.pi*Rvw))*60) #Gear ratio for top speed
 
-print("Engine Torque (max) needed:", Tmax_axle/GearRatio)
+print("Engine Torque (max) needed :", Tmax_axle/GearRatio)
 
 #Run taxi simulation
 #--------------------PART 2---------------------------------------------------
