@@ -41,7 +41,7 @@ max_d           = -1.5          #Maximum deceleration -> should be negative valu
 max_v           = 12.861        #Maximum achievable velocity -> 30 kts (15.433), 25 kts (12.86)
 v_cr            = 5.144         #Limit on speed on turns (approx 10 kts)
 std_taxtime     = 844.739       #time it takes normal taxi operations (25kts) to reach polderbaan. Pushback excluded
-Taxi_with_ac    = "no"         #Taxi with aircraft attached (yes) or not (anything else)
+Taxi_with_ac    = "no"          #Taxi with aircraft attached (yes) or not (anything else)
 MaxPower        = 250           #[kW] Selected engine MaxPower
 EngineRPM       = 1491          #RPM for selected engine
 
