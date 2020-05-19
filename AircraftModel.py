@@ -25,8 +25,8 @@ g           = 9.81      #[m/s^2] Great
 DesAccel        = 1.3           #[m/s^2]Desired acceleration
 ThrustSetMax    = 200000        #[N]Thrust setting
 Rvw             = 0.25          #[m] Radius Vehicle Wheel
-MLGTugW         = 15400         #[kg] estimated tug weight
-NGTugW          = 5400          #[kg] estimated nose gear tug weight
+MLGTugW         = 15000         #[kg] estimated tug weight
+NGTugW          = 15000         #[kg] estimated nose gear tug weight
 Slope           = 0.0           #[rad] 0.0300196631 max (aka 3%)
 CGfslg          = 1/3           #[%] assumed position of cg wrt fuselage (0 is bottom, 1 is top)
 LiftNG          = 0.05          #[m] How high the nosegear is lifted
@@ -35,6 +35,7 @@ MuRolStatDry    = 0.02          #[-]Static friction coefficient dry surface
 MuRolDynDry     = 0.02          #[-]Dynamic friction coefficient dry surface
 MuKinDry        = 0.8           #[-]range of 0.6 - 0.85
 MuKinWet        = 0.5           #[-]range of 0.45 - 0.75
+wheels          = 6             #Number of wheels on driving axles
 GearRatio       = 14.95         #Gear ratio
 max_d           = -1.5          #Maximum deceleration -> should be negative valu5.144e!
 max_v           = 12.861        #Maximum achievable velocity -> 30 kts (15.433), 25 kts (12.86)
@@ -47,45 +48,44 @@ EngineRPM       = 1491          #RPM for selected engine
 
 #Calculate cg position
 Liftslope   = np.arctan((LiftMLG-LiftNG)/(MLGx-NGx))
-cgx         = MACcg*MAC+XLEMAC
-cgy         = CGfslg*Dfslg+Hfslg-Dfslg+(LiftNG+(np.tan(Liftslope)*(cgx-NGx)))
-cgz         = 0
+cgx         = MACcg*MAC+XLEMAC                                                  #Position cg in x-direction, from nose to tail
+cgy         = CGfslg*Dfslg+Hfslg-Dfslg+(LiftNG+(np.tan(Liftslope)*(cgx-NGx)))   #Position cg in y-direction, from ground up
+cgz         = 0                                                                 #Position cg in z-direction, from center fuselage to left wing
 
 if Taxi_with_ac == "yes":
-    MRW = MRW + 2*MLGTugW + NGTugW
+    MRW = MRW + 2*MLGTugW + NGTugW  #weight of combinationo 
 else:
     MRW = 2*MLGTugW + NGTugW
     MaxPower = 0.5*MaxPower
     
 
-#Forces for limit thrust
-ResThrust       = MRW*DesAccel 
-Weightx         = MRW*g*np.sin(Slope)
-Weighty         = MRW*g*np.cos(Slope)
-ThrustArm       = cgy - Rmlg #[m]
-MLGnormalstat   = (Weightx*(ThrustArm)+(Weighty*(cgx-NGx)))/((cgx-NGx)+(MLGx-cgx))
-NGnormalstat    = Weighty-MLGnormalstat
-NGnormal        = 0 #[N] Main landing gear normal force
-MLGnormal       = MRW*g*np.cos(Slope) - NGnormal #[N] Main landing gear normal force
-MaxThrust       = (MLGnormal*(MLGx-cgx) - NGnormal*(cgx-NGx))/ThrustArm #[N]Maximum Force before tipover (+ DragNG*cgy + DragMLG*cgy)
+#Calculate forces for limit thrust
+ThrustArm       = cgy - Rmlg  #[m]Arm for thrust application (y-direction)
+ResThrust       = MRW*DesAccel  #[N] Resultant force for the desired acceleration                                            
+Weightx         = MRW*g*np.sin(Slope) #[N] Weight in x direction (due to slope)
+Weighty         = MRW*g*np.cos(Slope) #[N] Weight in y direction (due to slope)
+MLGnormalstat   = (Weightx*(ThrustArm)+(Weighty*(cgx-NGx)))/((cgx-NGx)+(MLGx-cgx))  #[N] MLG Normal force in static situation. Verified with airport planing manual
+NGnormalstat    = Weighty-MLGnormalstat                                             #[N] NG Normal force in static situation. Verified with airport planing manual
+NGnormal        = 0                                                                 #[N] Main landing gear normal force at tipover. 0 by definition
+MLGnormal       = Weighty                                                           #[N] Main landing gear normal force at tipover. 
+MaxThrust       = (MLGnormal*(MLGx-cgx) - NGnormal*(cgx-NGx))/ThrustArm             #[N]Maximum Force before tipover (+ DragNG*cgy + DragMLG*cgy)
 
 #Calculate normal Forces
-NGnormal    = NGnormalstat-(NGnormalstat/MaxThrust)*ResThrust
-MLGnormal   = (MRW*np.cos(Slope)*g)-NGnormal
+NGnormal    = NGnormalstat-(NGnormalstat/MaxThrust)*ResThrust   #[N] NG Normal force for max acceleration.
+MLGnormal   = Weighty-NGnormal                                  #[N] MLG Normal force for max acceleration
 
 #Calculate drag
-FrolStat    = MuRolStatDry*(MLGnormal+NGnormal) #[N] for static friction
-DragNG      = MuRolDynDry*NGnormal #[N] for dynamic friction MLG
-DragMLG     = MuRolDynDry*MLGnormal #[N] for dynamic friction NG
-DragRoll    = DragNG + DragMLG
-ThrustSetMax= ResThrust+Weightx+DragRoll #[N] Max thrust to be set
+FrolStat    = MuRolStatDry*(MLGnormal+NGnormal) #[N] Static friction force
+DragNG      = MuRolDynDry*NGnormal              #[N] Dynamic friction MLG
+DragMLG     = MuRolDynDry*MLGnormal             #[N] Dynamic friction NG
+DragRoll    = DragNG + DragMLG                  #[N] Total drag during roll
+ThrustSetMax= ResThrust+Weightx+DragRoll        #[N] Max thrust to be set
 
 #Calculate min and max force and torques
-Fperwheel = ThrustSetMax/4
-MinTorque = (FrolStat/6) *Rvw #Torque per wheel
-Torque = (ThrustSetMax/6) *Rvw #Torque per wheel
-Tmax_axle = 2*Torque #Max torque per engine
-Tmin_axle = 2*MinTorque #Min torque per engine
+MinTorque = (FrolStat/wheels) *Rvw          #[N*m] Minimal torque per wheel
+Torque = (ThrustSetMax/wheels) *Rvw         #[N*m] Torque per wheel to get resultant force
+Tmax_axle = 2*Torque                        #[N*m] Max torque per engine to get resultant force
+Tmin_axle = 2*MinTorque                     #[N*m] Min torque per engine
 
 #Calculate gearing ratio's required
 GearTopSpeed = EngineRPM/((max_v/(2*np.pi*Rvw))*60) #Gear ratio for top speed
@@ -98,16 +98,19 @@ max_a = ResThrust/MRW     #Maximum acceleration
 
 taxiway = np.array([[21.33,35.52,31.68,43.17,105.66,60.91,1383,120,950,80,60],
                     [0,38.8,0,44.8,0,49.5,0,105,0,43.6,52.6]])
+
 #First row is distance of straight part or corner
 #If corner, second row gives turn radius -> otherwise 0
+#In this code, the second row in the array is never used. However might be useful to make it more accurate.
 
 taxiwayid = np.array(['st','cr','st','cr','st','cr','st','cr','st','cr','cr'])
 #Taxiwayid show whether we have straight part (st) or corner (cr)
 
+#--------------------Code----------------------
 
 #Simulation parameters
 t = 0               #Starting time
-dt = 0.01          #Time step
+dt = 0.01           #Time step
 
 #Initial conditions
 v = 0               #Starting velocity
@@ -127,7 +130,6 @@ for i in range(len(taxiwayid)):
     
     if taxiwayid[i]=='st':                                  #If we have straight part   
         
-        #print('The ',i,'th part is a straight part')
         indstart = ind                                      #Starting index in while loop
         v = varray[indstart]                                #Starting velocity in straight part
             
@@ -137,6 +139,7 @@ for i in range(len(taxiwayid)):
             v = v + a*dt 
             if v > max_v:
                 v = max_v
+                a = 0                                       #If maximum speed is achieved, it does not need to accelerate anymore
             s = s + v*dt
             t = t + dt
             ind = ind + 1
@@ -151,9 +154,12 @@ for i in range(len(taxiwayid)):
             
             #Braking
             t_braking = (v_cr - v)/max_d
-            #print('Is the time for braking,',t_braking,', reasonable?') 
             
-            indnew = ind - int(round(t_braking/dt))         #Go back in time
+            indnew = ind - int(round(t_braking/dt))         #Go back in time-> this is the index where we will start braking
+
+            if indnew<0:                                    #Added after performing verification for high accelerations
+                indnew=0
+
             a = max_d                                       #Use maximum deceleration for braking
             
             v = varray[indnew]                          #Starting value in this while loop
@@ -188,7 +194,6 @@ for i in range(len(taxiwayid)):
              
     if taxiwayid[i]=='cr':                          #If we have a corner
         
-        #print('The ',i,'th part is a corner')
         indstart = ind                              #Starting index in while loop
         
         v = varray[indstart]                        #Starting velocity in the turn
@@ -211,6 +216,7 @@ for i in range(len(taxiwayid)):
             sarray = np.append(sarray,s)
             varray = np.append(varray,v)
             aarray = np.append(aarray,a)
+            
 
 print("Delta taxi time [s] to Polderbaan: ",(tarray[-1]*2.8)-std_taxtime )
 #-----------------------------------------------------------------------------
@@ -240,7 +246,7 @@ while i < len(acceleration):
 SectionTime = np.append(SectionTime,time[-1]-BeginTime)
 SectionAcceleration = np.append(SectionAcceleration,LastAcceleration)
 
-#Calculate resultant force for each section
+#Calculate input force for each section
 for a in SectionAcceleration:
         SectionResForce = np.append(SectionResForce,MRW*a) 
         if a >= 0:
@@ -257,7 +263,7 @@ while i< len(SectionCntrlForce):
         Energy = Energy + (SectionCntrlForce[i]/ThrustSetMax)*MaxPower*SectionTime[i]
     i = i + 1
 
-print("Energy needed for taxi TO: ", Energy, "kJ")
+print("Energy needed for taxi (single vehicle): ", Energy/1000, "[mJ]")
 
 
         
