@@ -44,6 +44,8 @@ Stat_air_dry    = 1
 w_rad_air       = 1.27      # [m] wheel radius aircraft MLG wheels
 w_rad_car1      = 0.537     # [m] wheel radius front tires external truck
 w_rad_car2      = 0.496     # [m] wheel radius rear tires external truck
+# Conversion
+ktstoms         = 0.514444  # [m/s/kts] 1 kts to m/s
 
 # ---------------------------------------------------- Calculations ----------------------------------------------------
 m_tot   = m_plane + m_plane_add + m_car  # [kg] Total mass
@@ -70,10 +72,12 @@ T_nlg_w_2 = F_nlg/pow_wheel_car*w_rad_car2
 
 # Min force
 F_roll = Roll_air*m_tot*9.81
+F_roll_nlg = ratio*F_roll
+F_roll_mlg_w = (F_roll - F_roll_nlg)/pow_wheel_air
 a_min = F_roll/m_tot
 
-
-
+T_nlg_w_1 = F_nlg/pow_wheel_car*w_rad_car1
+T_nlg_w_2 = F_nlg/pow_wheel_car*w_rad_car2
 
 
 
@@ -91,3 +95,11 @@ print("\t \t \t L \t \t \t R")
 print("Outer \t", round(T_mlg_w,  2), " \t ", round(T_mlg_w, 2))
 print("\t \t (", enough_traction(T_mlg_w, N_mlg/4, Stat_air_dry, "stat"),
       ") \t (", enough_traction(T_mlg_w, N_mlg/4, Stat_air_dry, "stat"), ")")
+
+
+def EGTS_power(a, v):
+    w_rad_air       = 1.27      # [m] wheel radius aircraft MLG wheels
+    F_tot = m_tot*a  # [N] Total force req to move plane at acceleration
+    F_mlg = (1-ratio)*F_tot  # [N] Force needed  from internal
+    F_mlg_w = F_mlg/pow_wheel_air  # [N] Force needed  from internal per wheel
+    w
