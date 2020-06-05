@@ -28,7 +28,7 @@ ratio           = 0.7       # [-]
 pow_wheel_air   = 2
 pow_wheel_car   = 4
 # Acceleration and speed
-at              = 1         # [m/s2] Acceleration with external
+at              = 1.3         # [m/s2] Acceleration with external
 vt              = 30        # [knots] Top speed with external
 # Masses
 ratio_plane     = 0.952     # [-] % weight on mlg
@@ -97,9 +97,12 @@ print("\t \t (", enough_traction(T_mlg_w, N_mlg/4, Stat_air_dry, "stat"),
       ") \t (", enough_traction(T_mlg_w, N_mlg/4, Stat_air_dry, "stat"), ")")
 
 
-def EGTS_power(a, v):
+def EGTS_power(a, v, ratio, pow_wheel):
     w_rad_air       = 1.27      # [m] wheel radius aircraft MLG wheels
+    m_tot = 97400+20000
     F_tot = m_tot*a  # [N] Total force req to move plane at acceleration
     F_mlg = (1-ratio)*F_tot  # [N] Force needed  from internal
-    F_mlg_w = F_mlg/pow_wheel_air  # [N] Force needed  from internal per wheel
-    w
+    F_mlg_w = F_mlg/pow_wheel  # [N] Force needed  from internal per wheel
+    T_mlg_w = F_mlg_w*w_rad_air
+    w = v/w_rad_air
+    return T_mlg_w*w
