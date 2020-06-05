@@ -60,14 +60,19 @@ F_mlg_w = F_mlg/pow_wheel_air  # [N] Force needed  from internal per wheel
 """if F_nlg > 23901.55:
     print("F_nlg = ",F_nlg)
     raise ValueError("This exceeds limit the NLG can  handle")"""
-# Min force
-F_roll = Roll_air*m_tot*9.81
 
-
+# Required torques
 T_mlg_w = F_mlg_w*w_rad_air
 
 T_nlg_w_1 = F_nlg/pow_wheel_car*w_rad_car1
 T_nlg_w_2 = F_nlg/pow_wheel_car*w_rad_car2
+
+
+# Min force
+F_roll = Roll_air*m_tot*9.81
+a_min = F_roll/m_tot
+
+
 
 
 

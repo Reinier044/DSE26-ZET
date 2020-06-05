@@ -275,8 +275,3 @@ while i< len(SectionCntrlForce):
 
 print("Energy needed for taxi: ", NumEngines*Energy/1000, "[mJ]")
 print("Total energy needed: ",NumCycles*NumEngines*Energy/1000, "[mJ]")
-
-
-
-
-        
