@@ -1,23 +1,88 @@
 """
-Created on TUES JUN 2 15:18:14 2020
+Created on TUES JUN 2 14:53:58 2020
+
 @author: Willem
-File to size MLG engines and calculate their performance
 """
+import numpy as np
+import matplotlib.pyplot as plt
+# ----------------------------------------------------- Functions ------------------------------------------------------
 
-# Inputs ------------------------------------------------------------------
-# Power Electrical motor
-EGTS_power_in = 10000/2  # [W] Electrical motor power in/ gear
-motor_eff = 1  # [-] Electrical motor efficiency
-EGTS_power_out = EGTS_power_in*motor_eff
 
-# Weights
-mrw = 97400  # [kg] Maximum ramp weight  !Note: Additional system weight not included!
-mtow = 93500  # [kg] Maximum take-off weight  !Note: Additional system weight not included!
-MLG_percent = 95.2  # [%] Percentage of weight on MLG
-NLG_percent = 1 - MLG_percent  # [%] Percentage of weight on NLG
-# Resistance
-Roll_res = 0.02  # [-] Rolling resistance
-Taxi_slope = 0.03  # [-]
-Dyn_fric = 0.8  # [-] Dynamic friction coefficient (concrete)
-Stat_fric = 1  # [-] Static friction coefficient (concrete)
+def enough_traction(torque, N, fric, u="stat", wheelrad=1.27):
+    if u is "stat":
+        if torque > (fric*N)*wheelrad:
+            #print("Too much torque, will slip")
+            return False
+        return True
+    elif u is "roll":
+        if torque <= (fric*N)*wheelrad:
+            #print("Not enough torque")
+            return False
+        return True
+    return "unvalid input"
 
+
+# ------------------------------------------------------- Inputs -------------------------------------------------------
+# Power ratio external to internal
+ratio           = 0.7       # [-]
+pow_wheel_air   = 2
+pow_wheel_car   = 4
+# Acceleration and speed
+at              = 1         # [m/s2] Acceleration with external
+vt              = 30        # [knots] Top speed with external
+# Masses
+ratio_plane     = 0.952     # [-] % weight on mlg
+m_plane         = 97400     # [kg] MRW
+m_plane_add     = 0         # [kg] Added on aircraft weight
+m_car           = 20000     # [kg] Weight of external vehicle
+
+# -------------------------------------------------------- Data --------------------------------------------------------
+# frictions
+Roll_air        = 0.02
+Stat_air_dry    = 1
+#dimensions
+w_rad_air       = 1.27      # [m] wheel radius aircraft MLG wheels
+w_rad_car1      = 0.537     # [m] wheel radius front tires external truck
+w_rad_car2      = 0.496     # [m] wheel radius rear tires external truck
+
+# ---------------------------------------------------- Calculations ----------------------------------------------------
+m_tot   = m_plane + m_plane_add + m_car  # [kg] Total mass
+# Normal forces
+N_nlg   = (m_car + m_plane*(1-ratio_plane))*9.81
+N_mlg   = (m_plane_add + m_plane*ratio_plane)*9.81
+N_mlg_w =  N_mlg/4
+
+# Required towing forces
+F_tot = m_tot*at  # [N] Total force req to move plane at acceleration
+F_nlg = ratio*F_tot  # [N] Force needed  from external
+F_mlg = (1-ratio)*F_tot  # [N] Force needed  from internal
+F_mlg_w = F_mlg/pow_wheel_air  # [N] Force needed  from internal per wheel
+"""if F_nlg > 23901.55:
+    print("F_nlg = ",F_nlg)
+    raise ValueError("This exceeds limit the NLG can  handle")"""
+# Min force
+F_roll = Roll_air*m_tot*9.81
+
+
+T_mlg_w = F_mlg_w*w_rad_air
+
+T_nlg_w_1 = F_nlg/pow_wheel_car*w_rad_car1
+T_nlg_w_2 = F_nlg/pow_wheel_car*w_rad_car2
+
+
+
+
+print("Total Force : ", F_tot)
+print("External vehicle: Ftot_ex=", round(F_nlg, 2))
+print("\t \t \t L \t \t \t R")
+print("front \t", round(T_nlg_w_1, 2), " \t ", round(T_nlg_w_1, 2))
+print("\t \t (", enough_traction(T_mlg_w, N_nlg/4, Stat_air_dry, "stat", w_rad_car1),
+      ") \t (", enough_traction(T_mlg_w, N_nlg/4, Stat_air_dry, "stat", w_rad_car1), ")")
+print("back \t", round(T_nlg_w_2, 2), " \t ", round(T_nlg_w_2, 2))
+print("\t \t (", enough_traction(T_mlg_w, N_nlg/4, Stat_air_dry, "stat", w_rad_car2),
+      ") \t (", enough_traction(T_mlg_w, N_nlg/4, Stat_air_dry, "stat", w_rad_car2), ")")
+print("EGTS: Ftot_in=", round(F_mlg, 2))
+print("\t \t \t L \t \t \t R")
+print("Outer \t", round(T_mlg_w,  2), " \t ", round(T_mlg_w, 2))
+print("\t \t (", enough_traction(T_mlg_w, N_mlg/4, Stat_air_dry, "stat"),
+      ") \t (", enough_traction(T_mlg_w, N_mlg/4, Stat_air_dry, "stat"), ")")
