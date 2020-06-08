@@ -10,10 +10,10 @@ import matplotlib.pyplot as plt
 
 #-------------------Input data-----------------
 
-max_a = 0.7         #Maximum acceleration achieved by ZET-system [m/s^2]
+max_a = 1.0        #Maximum acceleration achieved by ZET-system [m/s^2]
 max_d = -1.5        #Maximum deceleration achieved by ZET-system -> should be negative value! [m/s^2]
 #max_v = 15.433      #Maximum achievable velocity achieved by ZET-system -> 30 kts is maximum for A321 [m/s]
-max_v = 12.3466667
+max_v = 12.8611
 
 v_cr = 5.144        #Limit on speed on turns (approx 10 kts) [m/s]
 
@@ -30,20 +30,20 @@ v_cr = 5.144        #Limit on speed on turns (approx 10 kts) [m/s]
 #In this code, the second row in the array is never used. However might be useful to make it more accurate
 
 #Taxiway from D14 to runway 36C
-#taxiway = np.array([[21.33,35.52,31.68,43.17,105.66,60.91,1383,120,950,80,60],
-#                    [0,38.8,0,44.8,0,49.5,0,105,0,43.6,52.6]])
+taxiway = np.array([[21.33,35.52,31.68,43.17,105.66,60.91,1383,120,950,80,60],
+                   [0,38.8,0,44.8,0,49.5,0,105,0,43.6,52.6]])
 
 #Taxiway from D14 to Polderbaan
-taxiway = np.array([[21.33,35.52,31.68,43.17,105.66,60.91,1383,120,754,140,893,70,210,40,130,160,2140,130,1690,150,360],
-                    [0,38.8,0,44.8,0,49.5,0,105,0,75.8,0,90.6,0,94,0,101.5,0,172,0,107.5,0]])
+#taxiway = np.array([[21.33,35.52,31.68,43.17,105.66,60.91,1383,120,754,140,893,70,210,40,130,160,2140,130,1690,150,360],
+#                    [0,38.8,0,44.8,0,49.5,0,105,0,75.8,0,90.6,0,94,0,101.5,0,172,0,107.5,0]])
 
 #Taxiwayid show whether we have straight part (st) or corner (cr)
 
 #Taxiway ID from D14 to runway 36C
-#taxiwayid = np.array(['st','cr','st','cr','st','cr','st','cr','st','cr','cr'])
+taxiwayid = np.array(['st','cr','st','cr','st','cr','st','cr','st','cr','cr'])
 
 #Taxiway ID from D14 to Polderbaan
-taxiwayid = np.array(['st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st'])
+#taxiwayid = np.array(['st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st'])
 
 #--------------------Code----------------------
 
