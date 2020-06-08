@@ -74,26 +74,18 @@ def car_power(a, v, ratio, pow_wheel=4):
     return T_nlg_w_1*w_1,T_nlg_w_2*w_2
 
 
-def s_v_a_plotter(title,time, power, velocity, acceleration, layout='v'):
+def s_v_a_plotter(title,time, power, velocity, acceleration):
     """
     :param title: title of plots
         'egts': On aircraft power
         'car': Car power
         ' ': No title
-    :param layout: layout of plots
-        'v': vertical
-        'h': horizontal
     :param time: time array
     :param power: power array
     :param velocity: velocity array
     :param acceleration: acceleration array
     :return: nothing
     """
-
-    if layout == 'h':
-        n = 130
-    else:
-        n = 310
 
     gs = gridspec.GridSpec(2, 2)
 
@@ -105,7 +97,7 @@ def s_v_a_plotter(title,time, power, velocity, acceleration, layout='v'):
         ax1.set_xlabel("Time [s]")
         ax1.set_ylabel("Power [kW]")
         ax1.plot(time, [i/1000 for i in power])
-        ax0.plot(time, [52 for i in time], color='grey', linestyle='--')
+        ax1.plot(time, [52 for i in time], color='grey', linestyle='--')
     elif title is 'car':
         fig.suptitle("Vehicle Power")
         ax0 = fig.add_subplot(gs[1, 0])
