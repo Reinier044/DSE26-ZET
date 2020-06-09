@@ -4,8 +4,25 @@ import matplotlib.gridspec as gridspec
 # ----------------------------------------------------- Functions ------------------------------------------------------
 
 
-def stat_traction(torque, N, wheelrad, fric=1):
+def opt_force_ratio(F_nlg_allow,a_lst):
+    m_plane         = 97400     # [kg] MRW
+    m_car           = 20000     # [kg] Weight of external vehicle
+    m_tot = m_plane + m_car
+    Roll_fric       = 0.02      # [-] Rolling friction coefficient
 
+    F_tot = m_tot*max(a_lst) + Roll_fric*m_tot*9.81  # [N] Total force req to move plane at acceleration
+    print("Max force:", F_tot)
+    return F_nlg_allow/F_tot
+
+
+def v_t(a,t):
+    v = [0]
+    for i in range(1,len(a)):
+        v.append(a[i]*(t[i]-t[i-1]) + v[i-1])
+    return v
+
+
+def stat_traction(torque, N, wheelrad, fric=1):
     if torque > (fric*N)*wheelrad:
         #print("Too much torque, will slip")
         return False
@@ -59,7 +76,6 @@ def car_power(a, v, ratio, pow_wheel=4):
     T_nlg_w_1 = F_nlg_w*w_rad_car_1
     T_nlg_w_2 = F_nlg_w*w_rad_car_2
 
-
     if stat_traction(T_nlg_w_1, N_nlg_w, w_rad_car_1):
         print("Static friction checked rear wheels.")
     else:
@@ -68,10 +84,9 @@ def car_power(a, v, ratio, pow_wheel=4):
             print("Static friction checked front wheels.")
     else:
         raise ValueError("Exceeds Static friction")
-
     w_1 = v/w_rad_car_1
     w_2 = v/w_rad_car_2
-    return T_nlg_w_1*w_1,T_nlg_w_2*w_2
+    return T_nlg_w_1*w_1, T_nlg_w_2*w_2
 
 
 def s_v_a_plotter(title,time, power, velocity, acceleration):
@@ -92,25 +107,52 @@ def s_v_a_plotter(title,time, power, velocity, acceleration):
     fig = plt.figure()
     if title is 'egts':
         fig.suptitle("On Aircraft Power")
+
+        powermax = max(power)
+        time_idx = power.index(powermax)
+        powermax = powermax/1000
+        timemax = time[time_idx]
+
         ax1 = fig.add_subplot(gs[1, :])
         ax1.set_title("Power")
         ax1.set_xlabel("Time [s]")
         ax1.set_ylabel("Power [kW]")
         ax1.plot(time, [i/1000 for i in power])
+        ax1.annotate("max {pow}".format(pow=round(powermax, 2)), xy=(timemax, powermax), xytext=(timemax, powermax-100),
+                     arrowprops=dict(facecolor='black', shrink=0.05, width=0.5, headwidth=9),)
         ax1.plot(time, [52 for i in time], color='grey', linestyle='--')
+
+
     elif title is 'car':
         fig.suptitle("Vehicle Power")
+
+        powermax_0 = max(power[0,:])
+        time_idx_0 = power[0,:].argmax()
+        powermax_0 = powermax_0/1000
+        timemax_0 = time[time_idx_0]
+
         ax0 = fig.add_subplot(gs[1, 0])
         ax0.set_title("Power Front Wheel")
         ax0.set_xlabel("Time [s]")
         ax0.set_ylabel("Power [kW]")
         ax0.plot(time, [i/1000 for i in power[0, :]])
+        ax0.annotate("max {pow}".format(pow=round(powermax_0, 2)), xy=(timemax_0, powermax_0), xytext=(timemax_0,
+                                            powermax_0-75), arrowprops=dict(facecolor='black',
+                                                shrink=0.05, width=0.5, headwidth=9), )
+
+        powermax_1 = max(power[1, :])
+        time_idx_1 = power[1,:].argmax()
+        powermax_1 = powermax_1/1000
+        timemax_1 = time[time_idx_1]
+
         ax1 = fig.add_subplot(gs[1, 1])
         ax1.set_title("Power Rear Wheel")
         ax1.set_xlabel("Time [s]")
         ax1.set_ylabel("Power [kW]")
         ax1.plot(time, [i/1000 for i in power[1, :]])
-
+        ax1.annotate("max {pow}".format(pow=round(powermax_1, 2)), xy=(timemax_1, powermax_1), xytext=(timemax_1,
+                                            powermax_1-75), arrowprops=dict(facecolor='black',
+                                                width=0.5, headwidth=9), )
 
     ax2 = fig.add_subplot(gs[0, 0])
     ax2.set_title("Velocity")
@@ -129,24 +171,73 @@ def s_v_a_plotter(title,time, power, velocity, acceleration):
     plt.show()
     pass
 
-def v_t(a,t):
-    v = [0]
-    for i in range(1,len(a)):
-        v.append(a[i]*(t[i]-t[i-1]) + v[i-1])
-    return v
 
-power_ratio = 0.7
+def total_powerplot(P_nlg_tot, P_mlg_tot):
+    fig = plt.figure()
+    N = 3
+
+    preheat = 500  # [kW] Engine pre-heating
+    airco   = 125  # [kW] External Airco
+    startup = 700  # [kW] Start-up
+    steer   = 8    # [kW] Steering System
+    sensor  = 2    # [kW] Computers/sensors
+
+    Onaircraft = [np.array([0, P_nlg_tot + preheat+startup+sensor/2, 0]), 'Internal']
+    EGTS       = [np.array([P_nlg_tot, 0, P_nlg_tot]), 'EGTS']
+    P_car_prop = [np.array([0, P_mlg_tot, 0]), 'Car Tow']
+    Pre_heat   = [np.array([preheat, 0, 0]), 'Pre-heating']
+    Airco_ex   = [np.array([0, airco, 0]), 'External Airco']
+    Start_up   = [np.array([startup, 0, 0]), 'Start-up']
+    Steer_ex   = [np.array([0, steer, 0]), 'Steering System']
+    Sensors    = [np.array([sensor/2, sensor/2, sensor/2]), 'Computer/sensors']
+
+    ind = np.arange(N)    # the x locations for the groups
+    width = 0.35       # the width of the bars: can also be len(x) sequence
+
+    p1 = plt.bar(ind, Onaircraft[0], width)
+    p2 = plt.bar(ind, EGTS[0], width, bottom=Onaircraft[0])
+    p3 = plt.bar(ind, P_car_prop[0], width, bottom=EGTS[0]+Onaircraft[0])
+    p4 = plt.bar(ind, Pre_heat[0], width, bottom=Onaircraft[0]+EGTS[0]+P_car_prop[0])
+    p5 = plt.bar(ind, Airco_ex[0], width, bottom=Onaircraft[0]+EGTS[0]+P_car_prop[0]+Pre_heat[0])
+    p6 = plt.bar(ind, Start_up[0], width, bottom=Onaircraft[0]+EGTS[0]+P_car_prop[0]+Pre_heat[0]+Airco_ex[0])
+    p7 = plt.bar(ind, Steer_ex[0], width,
+                 bottom=Onaircraft[0]+EGTS[0]+P_car_prop[0]+Pre_heat[0]+Airco_ex[0]+Start_up[0])
+    p8 = plt.bar(ind, Sensors[0], width,
+                 bottom=Onaircraft[0]+EGTS[0]+P_car_prop[0]+Pre_heat[0]+Airco_ex[0]+Start_up[0]+Steer_ex[0])
+    #plt.yticks(np.arange(0, 3001, 150))
+    plt.ylabel('Power [kW]')
+    plt.title('Power Usage Different Cases')
+    plt.xticks(ind, ('Internal\n ICO \n External Power', 'External \n Vehicle', 'Internal \n ICO \n APU Power'))
+    plt.legend((p1[0], p2[0], p3[0], p4[0], p5[0], p6[0], p7[0], p8[0]),
+               (Onaircraft[1], EGTS[1], P_car_prop[1], Pre_heat[1], Airco_ex[1], Start_up[1], Steer_ex[1], Sensors[1]),
+               loc='center left', bbox_to_anchor=(1., 0.5))
+    fig.savefig('Total_Power_Sys_Dist', bbox_inches='tight')
+    plt.show()
+    pass
+
+
+
+
+# ------------------------------------------------------- Inputs -------------------------------------------------------
+F_nlg_allow = 62833.3333333
 a = [1, 1, 1, 1, 1, 1, 1, 1, 1, 0.75, 0.75, 0.75, 0.75, 0.6, 0.6, 0.5, 0.4, 0.4, 0.3, 0.3, 0.3, 0.2, 0.2, 0.2]
+
+# ---------------------------------------------------- Calculations ----------------------------------------------------
 t = [i for i in range((len(a)))]
 v = v_t(a, t)
+
+power_ratio = opt_force_ratio(F_nlg_allow, a)
+print(" POWER RATIO EXTERNAL-INTERNAL: ", power_ratio)
 
 P_egts_w = []
 for i in range(len(a)):
     P_egts_w.append(EGTS_power(a[i], v[i], power_ratio))
 
-P_car_w = np.zeros((2,len(a)))
+P_car_w = np.zeros((2, len(a)))
 for i in range(len(a)):
-    P_car_w[0,i], P_car_w[1,i] = car_power(a[i], v[i], power_ratio)
+    P_car_w[0, i], P_car_w[1, i] = car_power(a[i], v[i], power_ratio)
 
-s_v_a_plotter('egts',t, P_egts_w, v, a)
-s_v_a_plotter('car',t, P_car_w, v, a)
+s_v_a_plotter('egts', t, P_egts_w, v, a)
+s_v_a_plotter('car', t, P_car_w, v, a)
+
+total_powerplot((2*max(P_car_w[0, :])+2*max(P_car_w[1, :]))/1000, 2*max(P_egts_w)/1000)
