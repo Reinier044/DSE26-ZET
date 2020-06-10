@@ -63,7 +63,7 @@ def EGTS_power(a, v, ratio: float, pow_wheel: int = 2):
     :param pow_wheel: The number of powered MLG wheels. Automatically set to 2 which is the same as EGTS. [-]
     :return:
     """
-    w_rad_air       = 1.27      # [m] wheel radius aircraft MLG wheels
+    w_rad_air       = 1.27/2      # [m] wheel radius aircraft MLG wheels
     m_plane         = 97400     # [kg] MRW
     m_car           = 20000     # [kg] Mass of external vehicle
     m_tot = m_plane + m_car     # [kg] Total mass
