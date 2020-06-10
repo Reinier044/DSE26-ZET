@@ -4,40 +4,72 @@ import matplotlib.gridspec as gridspec
 # ----------------------------------------------------- Functions ------------------------------------------------------
 
 
-def opt_force_ratio(F_nlg_allow,a_lst):
+def opt_force_ratio(F_nlg_allow, a_lst):
+    """
+    This function finds the power ratio between the external vehicle and the mlg gear engines. For this the max
+    allowable force on the nose landing gear strut is used.
+    :param F_nlg_allow: Maximum allowed 'fatigue' force of the nowe landing gear [N]
+    :param a_lst: List of all the accelerations, which is needed to find max acceleration which correlates to
+                    max force  [m/s^2]
+    :return: Ratio of (maximum) force that will be provided by the external vehicle.
+    """
     m_plane         = 97400     # [kg] MRW
-    m_car           = 20000     # [kg] Weight of external vehicle
-    m_tot = m_plane + m_car
+    m_car           = 22000     # [kg] Mass of external vehicle
+    m_tot = m_plane + m_car     # [kg] Total mass
     Roll_fric       = 0.02      # [-] Rolling friction coefficient
 
-    F_tot = m_tot*max(a_lst) + Roll_fric*m_tot*9.81  # [N] Total force req to move plane at acceleration
-    print("Max force:", F_tot)
+    F_tot = m_tot*max(a_lst) + Roll_fric*m_tot*9.81  # [N] Total force req to move plane at max acceleration
+    print("\nMax force: {F} N  - POWER RATIO EXTERNAL-INTERNAL: {rat}\n".format(F=F_tot, rat=F_nlg_allow/F_tot))
     return F_nlg_allow/F_tot
 
 
-def v_t(a,t):
-    v = [0]
-    for i in range(1,len(a)):
+def v_t(a, t):
+    """
+    Function that calculates the velocity for each constant acceleration and corresponding time interval.
+    More specifically v(t) = a*t + v_0 will be used.
+    :param a: List of all the accelerations. [m/s^2]
+    :param t: List of corresponding time intervals. [s]
+    :return: List of the corresponding velocities. [m/s]
+    """
+    v = [0]  # [m/s]
+    for i in range(1, len(a)):
         v.append(a[i]*(t[i]-t[i-1]) + v[i-1])
     return v
 
 
 def stat_traction(torque, N, wheelrad, fric=1):
+    """
+    Function that checks that the static friction / tractive force is not exceeded for a given torque and static
+    friction coefficient. If the torque is higher than the limit the wheel will slip.
+    :param torque: Torque of the wheel. [Nm]
+    :param N: Normal force resting on the wheel. [N]
+    :param wheelrad: Radius of the wheel. [m]
+    :param fric: Static friction coefficient. Automatically set to 1 for tire (both airplane and vehicle) on dry concrete, other
+                 values may be used to mimic other runway conditions and other tire types. [-]
+    :return: True if limit is not exceeded and False if it is.
+    """
     if torque > (fric*N)*wheelrad:
         #print("Too much torque, will slip")
         return False
     return True
 
 
-def EGTS_power(a, v, ratio, pow_wheel=2):
-
+def EGTS_power(a, v, ratio: float, pow_wheel: int = 2):
+    """
+    Function that calculates the (peak) power required by each MLG engine based upon the acceleration and speed.
+    :param a: List of all the accelerations. [m/s^2]
+    :param v: List of the corresponding velocities. [m/s]
+    :param ratio: Ratio of (maximum) force that will be provided by the external vehicle. [-]
+    :param pow_wheel: The number of powered MLG wheels. Automatically set to 2 which is the same as EGTS. [-]
+    :return:
+    """
     w_rad_air       = 1.27      # [m] wheel radius aircraft MLG wheels
     m_plane         = 97400     # [kg] MRW
-    m_car           = 20000     # [kg] Weight of external vehicle
-    m_tot = m_plane + m_car
-    weight_ratio    = 0.952     # [-] Weight distribution ratio
-    Roll_fric       = 0.02      # [-] Rolling friction coefficient
-    Roll_fric_car   = 0.0065
+    m_car           = 20000     # [kg] Mass of external vehicle
+    m_tot = m_plane + m_car     # [kg] Total mass
+    weight_ratio    = 0.952     # [-] Landing gear weight distribution ratio
+    Roll_fric       = 0.02      # [-] Rolling friction coefficient of airplane wheels
+    Roll_fric_car   = 0.0065    # [-] Rolling friction coefficient of external vehicle wheels
 
 
     N_mlg   =  m_plane*weight_ratio*9.81
@@ -49,6 +81,7 @@ def EGTS_power(a, v, ratio, pow_wheel=2):
     F_mlg_w = F_mlg/pow_wheel  # [N] Force needed  from internal per wheel
 
     T_mlg_w = F_mlg_w*w_rad_air
+    print("Main landing gear torque:",T_mlg_w)
 
     if stat_traction(T_mlg_w, N_mlg_w, w_rad_air):
         print("EGTS: Static friction checked")
@@ -94,19 +127,17 @@ def car_power(a, v, ratio, pow_wheel=4):
     return T_nlg_w_1*w_1, T_nlg_w_2*w_2
 
 
-def s_v_a_plotter(title,time, power, velocity, acceleration):
+def s_v_a_plotter(title, time, power, velocity, acceleration):
     """
-    :param title: title of plots
-        'egts': On aircraft power
-        'car': Car power
-        ' ': No title
-    :param time: time array
-    :param power: power array
-    :param velocity: velocity array
-    :param acceleration: acceleration array
-    :return: nothing
+    Function that presents this required power in a required power profile diagram together with the respective
+    acceleration and velocity diagrams. The maximum power is also indicated in that graph.
+    :param title:
+    :param time:
+    :param power:
+    :param velocity: List of the corresponding velocities. [m/s]
+    :param acceleration: List of all the accelerations. [m/s^2]
+    :return: Plots
     """
-
     gs = gridspec.GridSpec(2, 2)
 
     fig = plt.figure()
@@ -268,7 +299,6 @@ t = [i for i in range((len(a)))]
 v = v_t(a, t)
 
 power_ratio = opt_force_ratio(F_nlg_allow, a)
-print(" POWER RATIO EXTERNAL-INTERNAL: ", power_ratio)
 
 P_egts_w = []
 for i in range(len(a)):
