@@ -37,18 +37,21 @@ def EGTS_power(a, v, ratio, pow_wheel=2):
     m_tot = m_plane + m_car
     weight_ratio    = 0.952     # [-] Weight distribution ratio
     Roll_fric       = 0.02      # [-] Rolling friction coefficient
+    Roll_fric_car   = 0.0065
+
 
     N_mlg   =  m_plane*weight_ratio*9.81
     N_mlg_w =  N_mlg/4
+    N_nlg   = (m_car + m_plane*(1-weight_ratio))*9.81
 
-    F_tot = m_tot*a + Roll_fric*m_tot*9.81  # [N] Total force req to move plane at acceleration
+    F_tot = m_tot*a + Roll_fric*N_mlg + Roll_fric_car*N_nlg  # [N] Total force req to move plane at acceleration
     F_mlg = (1-ratio)*F_tot  # [N] Force needed  from internal
     F_mlg_w = F_mlg/pow_wheel  # [N] Force needed  from internal per wheel
 
     T_mlg_w = F_mlg_w*w_rad_air
 
     if stat_traction(T_mlg_w, N_mlg_w, w_rad_air):
-        print("Static friction checked")
+        print("EGTS: Static friction checked")
     else:
         raise ValueError("Exceeds Static friction")
 
@@ -64,11 +67,13 @@ def car_power(a, v, ratio, pow_wheel=4):
     m_tot = m_plane + m_car
     weight_ratio    = 0.952     # [-] Weight distribution ratio
     Roll_fric       = 0.02      # [-] Rolling friction coefficient
+    Roll_fric_car   = 0.0065
 
+    N_mlg   =  m_plane*weight_ratio*9.81
     N_nlg   = (m_car + m_plane*(1-weight_ratio))*9.81
     N_nlg_w = N_nlg/4
 
-    F_tot = m_tot*a + Roll_fric*m_tot*9.81  # [N] Total force req to move plane at acceleration
+    F_tot = m_tot*a + Roll_fric*N_mlg + Roll_fric_car*N_nlg  # [N] Total force req to move plane at acceleration
     F_nlg = ratio*F_tot  # [N] Force needed  from internal
     print(F_nlg)
     F_nlg_w = F_nlg/pow_wheel  # [N] Force needed  from internal per wheel
@@ -114,7 +119,7 @@ def s_v_a_plotter(title,time, power, velocity, acceleration):
         timemax = time[time_idx]
 
         ax1 = fig.add_subplot(gs[1, :])
-        ax1.set_title("Power")
+        ax1.set_title("Power/Gear")
         ax1.set_xlabel("Time [s]")
         ax1.set_ylabel("Power [kW]")
         ax1.plot(time, [i/1000 for i in power])
@@ -176,9 +181,9 @@ def total_powerplot(P_nlg_tot, P_mlg_tot):
     fig = plt.figure()
     N = 3
 
-    preheat = 500  # [kW] Engine pre-heating
+    preheat = 92   # [kW] Engine pre-heating
     airco   = 125  # [kW] External Airco
-    startup = 700  # [kW] Start-up
+    startup = 0    # [kW] Start-up
     steer   = 8    # [kW] Steering System
     sensor  = 2    # [kW] Computers/sensors
 
@@ -204,23 +209,59 @@ def total_powerplot(P_nlg_tot, P_mlg_tot):
                  bottom=Onaircraft[0]+EGTS[0]+P_car_prop[0]+Pre_heat[0]+Airco_ex[0]+Start_up[0])
     p8 = plt.bar(ind, Sensors[0], width,
                  bottom=Onaircraft[0]+EGTS[0]+P_car_prop[0]+Pre_heat[0]+Airco_ex[0]+Start_up[0]+Steer_ex[0])
+
+    p9 = plt.bar(ind, [0, 0, 62], width, facecolor='darkorange', edgecolor='gray', lw=2, ls='--')
+
+    max_bar = Onaircraft[0]+EGTS[0]+P_car_prop[0]+Pre_heat[0]+Airco_ex[0]+Start_up[0]+Steer_ex[0]+Sensors[0]
+
+    plt.annotate(round(max_bar[0], 2), xy=(ind[0], max_bar[0]), xytext=(ind[0]-0.15, max_bar[0]+10), )
+    plt.annotate(round(max_bar[1], 2), xy=(ind[1], max_bar[1]), xytext=(ind[1]-0.15, max_bar[1]+10), )
+    plt.annotate(round(max_bar[2], 2), xy=(ind[2], max_bar[2]), xytext=(ind[2]-0.15, max_bar[2]+10), )
+
     #plt.yticks(np.arange(0, 3001, 150))
     plt.ylabel('Power [kW]')
     plt.title('Power Usage Different Cases')
     plt.xticks(ind, ('Internal\n ICO \n External Power', 'External \n Vehicle', 'Internal \n ICO \n APU Power'))
-    plt.legend((p1[0], p2[0], p3[0], p4[0], p5[0], p6[0], p7[0], p8[0]),
-               (Onaircraft[1], EGTS[1], P_car_prop[1], Pre_heat[1], Airco_ex[1], Start_up[1], Steer_ex[1], Sensors[1]),
+    plt.legend((p1[0], p2[0], p3[0], p4[0], p5[0], p6[0], p7[0], p8[0], p9[0]),
+               (Onaircraft[1], EGTS[1], P_car_prop[1], Pre_heat[1], Airco_ex[1], Start_up[1], Steer_ex[1], Sensors[1], "APU available"),
                loc='center left', bbox_to_anchor=(1., 0.5))
     fig.savefig('Total_Power_Sys_Dist', bbox_inches='tight')
     plt.show()
     pass
 
 
+def static_power(velocity, time,ratio):
+    P_plane, P_car_1, P_car_2 = [], [], []
+    for vel in velocity:
+        P_plane.append(EGTS_power(0, vel, ratio)/1000)
+        i,j = car_power(0, vel, ratio)
+        P_car_1.append(i/1000)
+        P_car_2.append(j/1000)
+
+    fig, axs = plt.subplots(4, sharex=True)
+    fig.suptitle("Power Needed for Constant Velocity")
+    axs[0].set_title("Velocity")
+    axs[0].set_ylabel("Speed [m/s]")
+    axs[0].plot(time,velocity,color='g')
+    axs[1].set_title("Power EGTS/Gear")
+    axs[1].set_ylabel("Power [kW]")
+    axs[1].plot(time, P_plane)
+    axs[2].set_title("Power Car Front Wheel")
+    axs[2].set_ylabel("Power [kW]")
+    axs[2].plot(time, P_car_1)
+    axs[3].set_title("Power Car Rear Wheel")
+    axs[3].set_ylabel("Power [kW]")
+    axs[3].set_xlabel("Time [s]")
+    axs[3].plot(time, P_car_2)
+    plt.tight_layout()
+
+    plt.show()
+    pass
 
 
 # ------------------------------------------------------- Inputs -------------------------------------------------------
-F_nlg_allow = 62833.3333333
-a = [1, 1, 1, 1, 1, 1, 1, 1, 1, 0.75, 0.75, 0.75, 0.75, 0.6, 0.6, 0.5, 0.4, 0.4, 0.3, 0.3, 0.3, 0.2, 0.2, 0.2]
+F_nlg_allow = 120000
+a = [1.8, 1.8, 1.75, 1.65, 1.4, 1.15, 1, 0.9, 0.8, 0.75, 0.7, 0.65, 0.6, 0.55, 0.55, 0.5]
 
 # ---------------------------------------------------- Calculations ----------------------------------------------------
 t = [i for i in range((len(a)))]
@@ -241,3 +282,4 @@ s_v_a_plotter('egts', t, P_egts_w, v, a)
 s_v_a_plotter('car', t, P_car_w, v, a)
 
 total_powerplot((2*max(P_car_w[0, :])+2*max(P_car_w[1, :]))/1000, 2*max(P_egts_w)/1000)
+static_power(v, t, power_ratio)
