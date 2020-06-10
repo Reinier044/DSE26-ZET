@@ -31,12 +31,12 @@ E = 50*60                                    #Endurance of 50 min loiter at hold
 #Weights
 MTOW = 97000                                 #Maximum take off weight [kg]
 OEW_or = 47000*g                             #OEW A321neo [N]
-#W_PL = 28600*g                               #Payload weight [N]
-W_PL = 26389*g                              #Payload weight for validation [N]
+W_PL = 28600*g                               #Payload weight [N]
+#W_PL = 26389*g                              #Payload weight for validation [N]
 
 #Fuel fractions from Roskam page 12
 W1_over_Wto = 0.990
-#W2_over_W1 is calculated as constant fuel added latter on in the coe
+W2_over_W1 = 0.990                           #This is for conventional taxiing-> change?
 W3_over_W2 = 0.995
 W4_over_W3 = 0.980
 #Determine W5_over_W4                        #Fuel fraction cruise
@@ -59,22 +59,9 @@ print('Is value LD_loiter, ',LD_loiter, ', within range 14-18?') #Check if withi
 SFC_cruise = SFC_cruise * 0.283 * 10**-4     #Specific fuel coefficient cruise [lb/lbf/hr-> kg/Ns]
 SFC_loiter = SFC_loiter * 0.283 * 10**-4     #Specific fuel coefficient loiter [lb/lbf/hr-> kg/Ns]
 
-#Pushback Operations Fuel
-Fuel_Cons_Truck = 0.231 * 175                                       #Fuel consumption conventional pushback truck per hour diesel [L/h]
-Pushback_Time = 6 * 60                                              #Conventional pushback time [s]
-Vfuel_pushback = (Pushback_Time/3600)*Fuel_Cons_Truck               #Fuel consumption conventional pushback truck diesel [L]
-Cal_Val_Diesel = 38.6                                               #The calorific value of diesel fuel [MJ/litre]
-Cal_Val_Jet = 43.15                                                 #The calorific value of Jet A-1 (kerosene) [MJ/kg]
-Mfuel_pushback = (Vfuel_pushback*Cal_Val_Diesel)/Cal_Val_Jet        #Fuel used for pushback converted to Jet A-1 fuel [kg]
-
-#Taxi Operations Fuel
-Taxi_Outbound_Time = 6*60 + 35                                      #Conventional taxi time [s]
-Fuel_Cons_Taxi = 2.25                                               #Fuel consumption engine based taxiing per second [kg/s]
-Mfuel_taxi_outbound = Taxi_Outbound_Time * Fuel_Cons_Taxi           #Fuel consumption engine based taxiing [kg]
-
 '''
 #Variables
-Range = 4716.9                               #Range [km]
+Range = 2238.49                              #Range [km]
 addedweight = 0                              #Added weight by ZET-system [kg]
 
 Range = Range*1000                           #Range [km-> m]
@@ -86,14 +73,14 @@ OEW = OEW_or + addedweight                   #New OEW with ZET system included
 W5_over_W4 = 1/exp((Range*g*SFC_cruise)/(V_cruise*LD_cruise))
 
 #Brequet endurance equation for loiter
-#W6_over_W5 = 1/exp((E*g*SFC_loiter)/(LD_loiter))
-W6_over_W5 = 1                                                   #If reserve fuel is not accounted for
+W6_over_W5 = 1/exp((E*g*SFC_loiter)/(LD_loiter))
+#W6_over_W5 = 1                                                   #If reserve fuel is not accounted for
 
-Mff = W1_over_Wto*W3_over_W2*W4_over_W3*W5_over_W4*W6_over_W5*W7_over_W6*W8_over_W7
+Mff = W1_over_Wto*W2_over_W1*W3_over_W2*W4_over_W3*W5_over_W4*W6_over_W5*W7_over_W6*W8_over_W7
 Mused = 1-Mff
 
-WTO = (OEW + W_PL +Mfuel_taxi_outbound*9.81)/(1-Mused)                #WTO in [N]
-Mfuel = (Mused*WTO)/g +Mfuel_taxi_outbound                            #Fuel used in [kg]
+WTO = (OEW + W_PL)/(1-Mused)                #WTO in [N]
+Mfuel = (Mused*WTO)/g                       #Fuel used in [kg]
 
 if (WTO/g)>MTOW:                        #Check if Maximum Take-off weight is exceeded
     print('Warning: Take off weight, ', WTO / g, ' kg, exceed MTOW of 97000 [kg]')
@@ -101,7 +88,6 @@ if (WTO/g)>MTOW:                        #Check if Maximum Take-off weight is exc
 
 #Making Plots
 n = 9                                               #N+1 different weight between 0 and 1000, equally spaced
-addedweightlst = np.linspace(0,1000,n)
 Rangelst = np.array([1538,1806,2239,2816])          #Max range to cover 60,70,80 and 90% of all A321 flights
 Mfuellst = np.zeros((len(Rangelst),n))              #Matrix with columns: total fuel consumption in [kg] for given added weight; row gives range
 WTOlst = np.zeros((len(Rangelst),n))                #List of take-off weight in [kg] for given added weight
@@ -119,25 +105,18 @@ for i in range(len(Rangelst)):
     # Brequet endurance equation for loiter
     W6_over_W5 = 1 / exp((E * g * SFC_loiter) / (LD_loiter))
 
+    Mff = W1_over_Wto * W2_over_W1 * W3_over_W2 * W4_over_W3 * W5_over_W4 * W6_over_W5 * W7_over_W6 * W8_over_W7
+    Mused = 1 - Mff
+
     for j in range(n):
+
+        addedweightlst = np.linspace(0,1000,n)
 
         # New OEW
         OEW = OEW_or + addedweightlst[j]*9.81  # New OEW with ZET system included in [N]
 
-        if addedweightlst[j]!=0:               #In the case the ZET-system is used
-            Mff = W1_over_Wto * W3_over_W2 * W4_over_W3 * W5_over_W4 * W6_over_W5 * W7_over_W6 * 0.994
-            #W8_over_W7 = 0.992 for conventional engine based taxiing, now electrical inbounded taxiing
-
-            Mused = 1 - Mff
-            WTO = (OEW + W_PL) / (1 - Mused)  # WTO in [N]
-            Mfuel = (Mused * WTO) / g  # Fuel used in [kg]
-
-        else:                                  #Baseline if ZET-system is not used and thus engine based!
-            Mff = W1_over_Wto * W3_over_W2 * W4_over_W3 * W5_over_W4 * W6_over_W5 * W7_over_W6 * W8_over_W7
-
-            Mused = 1 - Mff
-            WTO = (OEW + W_PL + Mfuel_taxi_outbound*9.81)/(1-Mused)                #WTO in [N]
-            Mfuel = (Mused*WTO)/g + Mfuel_taxi_outbound                            #Fuel used in [kg]
+        WTO = (OEW + W_PL) / (1 - Mused)        # WTO in [N]
+        Mfuel = (Mused * WTO) / g               # Fuel used in [kg]
 
         Mfuellst[i,j]=Mfuel                       #Appending to list
         WTOlst[i,j]=WTO/g                         #Appending to list
@@ -146,9 +125,7 @@ for i in range(len(Rangelst)):
             print('Warning: Take off weight, ', WTO / g, ' kg, exceed MTOW of 97000 [kg] for added weight of', addedweightlst[j], '[kg] and range of', Rangelst[i], '[km]')
 
 plt.figure()
-plt.grid()
-plt.plot(addedweightlst[1:n],Mfuellst[0,1:n]-Mfuellst[0,0]-Mfuel_pushback, addedweightlst[1:n], Mfuellst[1,1:n]-Mfuellst[1,0]-Mfuel_pushback, addedweightlst[1:n], Mfuellst[2,1:n]-Mfuellst[2,0]-Mfuel_pushback, addedweightlst[1:n], Mfuellst[3,1:n]-Mfuellst[3,0]-Mfuel_pushback)
+plt.plot(addedweightlst,Mfuellst[0,:]-Mfuellst[0,0], addedweightlst, Mfuellst[1,:]-Mfuellst[1,0], addedweightlst, Mfuellst[2,:]-Mfuellst[2,0], addedweightlst, Mfuellst[3,:]-Mfuellst[3,0])
 plt.legend(['Range = 1538 [km]; 60% A321 flights','Range = 1806 [km]; 70% A321 flights', 'Range = 2239 [km]; 80% A321 flights', 'Range = 2816 [km]; 90% A321 flights'])
 plt.xlabel('Added weight in [kg]')
 plt.ylabel('Extra fuel consumed in [kg]')
-
