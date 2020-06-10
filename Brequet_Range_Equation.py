@@ -125,7 +125,7 @@ for i in range(len(Rangelst)):
         OEW = OEW_or + addedweightlst[j]*9.81  # New OEW with ZET system included in [N]
 
         if addedweightlst[j]!=0:               #In the case the ZET-system is used
-            Mff = W1_over_Wto * W3_over_W2 * W4_over_W3 * W5_over_W4 * W6_over_W5 * W7_over_W6 * 0.994
+            Mff = W1_over_Wto * W3_over_W2 * W4_over_W3 * W5_over_W4 * W6_over_W5 * W7_over_W6 * 0.992
             #W8_over_W7 = 0.992 for conventional engine based taxiing, now electrical inbounded taxiing
 
             Mused = 1 - Mff
