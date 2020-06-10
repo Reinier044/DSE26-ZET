@@ -112,6 +112,7 @@ for i in range(len(taxiwayid)):
                 v = v + a*dt 
                 if v < v_cr:                                #For now, as first order estimate, if we brake sufficiently a small part has a velocity of v_cr before turn
                     v = v_cr
+                    a = 0
                 s = s + v*dt
                 t = t + dt
                 
