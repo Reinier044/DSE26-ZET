@@ -190,3 +190,5 @@ plt.plot(tarray,aarray)
 plt.xlabel('Time')
 plt.ylabel('Acceleration')
 plt.show()
+
+#..
