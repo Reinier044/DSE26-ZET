@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 
 #-------------------Input data-----------------
 
-max_a = 0.8         #Maximum acceleration achieved by ZET-system [m/s^2]
+max_a = 0.7         #Maximum acceleration achieved by ZET-system [m/s^2]
 max_d = -0.7        #Maximum deceleration achieved by ZET-system -> should be negative value! [m/s^2]
 max_v = 15.433      #Maximum achievable velocity achieved by ZET-system -> 30 kts is maximum for A321 [m/s]
 #max_v = 12.8611

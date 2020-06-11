@@ -27,7 +27,7 @@ max_v_eng = 15.433                  #Maximum achievable velocity achieved for A3
 # In this code, the second row in the array is never used. However might be useful to make it more accurate
 
 # Taxiway from D14 to runway 36C
-# taxiway = np.array([[21.33, 35.52, 31.68, 43.17, 105.66, 60.91, 1383, 120, 950, 80, 60],
+#taxiway = np.array([[21.33, 35.52, 31.68, 43.17, 105.66, 60.91, 1383, 120, 950, 80, 60],
 #                    [0, 38.8, 0, 44.8, 0, 49.5, 0, 105, 0, 43.6, 52.6]])
 
 # Taxiway from D14 to Polderbaan
