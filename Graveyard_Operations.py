@@ -26,20 +26,20 @@ max_v_eng = 15.433                  #Maximum achievable velocity achieved for A3
 # If corner, second row gives max velocity in turn-> 10; 15 or 20 [kts]
 
 # Taxiway from D14 to runway 36C
-taxiway = np.array([[21.33, 35.52, 31.68, 43.17, 105.66, 60.91, 1383, 120, 950, 80, 60],
-                    [0, 5.1444, 0, 5.1444, 0, 5.1444, 0, 10.2889, 0, 5.1444, 5.1444]])
+#taxiway = np.array([[21.33, 35.52, 31.68, 43.17, 105.66, 60.91, 1383, 120, 950, 80, 60],
+#                    [0, 5.1444, 0, 5.1444, 0, 5.1444, 0, 10.2889, 0, 5.1444, 5.1444]])
 
 # Taxiway from D14 to Polderbaan
-#taxiway = np.array([[21.33,35.52,31.68,43.17,105.66,60.91,1383,120,754,140,280,70,210,40,130,160,2140,130,1690,150,360],
-#                    [0,5.1444,0,5.1444,0,5.1444,0,10.2889,0,5.1444,0,10.2889,0,7.7167,0,5.1444,0,7.7167,0,5.1444,0]])
+taxiway = np.array([[21.33,35.52,31.68,43.17,105.66,60.91,1383,120,754,140,280,70,210,40,130,160,2140,130,1690,150,360],
+                    [0,5.1444,0,5.1444,0,5.1444,0,10.2889,0,5.1444,0,10.2889,0,7.7167,0,5.1444,0,7.7167,0,5.1444,0]])
 
 # Taxiwayid show whether we have straight part (st) or corner (cr)
 
 # Taxiway ID from D14 to runway 36C
-taxiwayid = np.array(['st', 'cr', 'st', 'cr', 'st', 'cr', 'st', 'cr', 'st', 'cr', 'cr'])
+#taxiwayid = np.array(['st', 'cr', 'st', 'cr', 'st', 'cr', 'st', 'cr', 'st', 'cr', 'cr'])
 
 # Taxiway ID from D14 to Polderbaan
-#taxiwayid = np.array(['st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st'])
+taxiwayid = np.array(['st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st'])
 
 # --------------------Code----------------------
 
@@ -69,7 +69,9 @@ for i in range(len(taxiwayid)):
         indstart = ind                                          # Starting index in while loop
         v = varray[indstart]                                    # Starting velocity in straight part
 
-        while s < taxiway[0][i] + sarray[indstart]:             #Needed distance covered [m]
+        distcoverd = taxiway[0][i] + sarray[indstart]           #Needed distance covered [m]
+
+        while s < distcoverd:
 
             for j in range(len(v_ZET)):
                 if v>v_ZET[j] and v<=v_ZET[j+1]:
@@ -92,8 +94,8 @@ for i in range(len(taxiwayid)):
             varray = np.append(varray, v)
             aarray = np.append(aarray, a)
 
-        if i == len(taxiwayid)-1:                 # This is the last part, so no upcoming turn
-            v_cr = 5.1444                         # Last straight part, make sure max 10 kts, change?
+        if i == len(taxiwayid)-1:                 # This is the last part, so we need to stand still at the end of this part
+            v_cr = 0                              # Stand still [m/s]
         else:                                     # After straight part, always a turn!
             v_cr = taxiway[1][i+1]                # Velocity in turn is dependant on turn coming
             print('Velocity next turn is', v_cr)
@@ -113,7 +115,7 @@ for i in range(len(taxiwayid)):
             s = sarray[indnew]  # Starting value in this while loop
             t = tarray[indnew]  # Starting value in this while loop
 
-            while sarray[indnew] <= taxiway[0][i] + sarray[indstart]:  # Of course we still need to cover all distances
+            while sarray[indnew] <= distcoverd:  # Of course we still need to cover all distances
 
                 #v = v + a * dt
                 if v < v_cr:                #If velocity is still smaller than v_cr, room to accelerate to v_cr
@@ -157,6 +159,18 @@ for i in range(len(taxiwayid)):
                     varray = np.append(varray, v)
                     aarray = np.append(aarray, a)
 
+                if v<=0:
+                    s = distcoverd
+
+                    tarray = tarray[0:indnew]
+                    sarray = sarray[0:indnew]
+                    varray = varray[0:indnew]
+                    aarray = sarray[0:indnew]
+
+                    ind = indnew
+
+                    break
+
             ind = indnew  # Correction for extra time
 
         print('End velocity is', varray[ind], 'and end time is', tarray[ind])
@@ -167,11 +181,6 @@ for i in range(len(taxiwayid)):
         indstart = ind  # Starting index in while loop
 
         v = varray[indstart]  # Starting velocity in the turn
-
-        if i == len(taxiwayid)-1:                 # This is the last part, so no upcoming turn
-            v_cr = 5.1444                         # Last straight part, make sure max 10 kts, change?
-        else:                                     # After straight part, always a turn!
-            v_cr = taxiway[1][i]                  # Velocity in turn is dependant on turn coming
 
         while s < (taxiway[0][i] + sarray[indstart]):
 
