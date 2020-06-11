@@ -9,13 +9,11 @@ import matplotlib.pyplot as plt
 
 # -------------------Input data ZET-system-----------------
 
-#a_ZET = np.array([x1,x2,x3])
-#v_ZET = np.array([0,7,12,14.97])
-
-
 a_ZET = np.array([1.8, 1.8, 1.62, 1.42, 1.16, 1.01, 0.92, 0.83, 0.77, 0.72, 0.67, 0.6, 0.57, 0.55, 0.53])               #Acceleration array achieved by ZET-system [m/s^2]
 v_ZET = np.array([0, 1.8, 3.6, 5.22, 6.64, 7.80, 8.81, 9.73, 10.56, 11.33, 12.05, 12.72, 13.32, 13.89, 14.44, 14.97])   #Velocity array for acceleration ZET-system [m/s]
 d_ZET = -0.7                    #Maximum deceleration achieved by ZET-system -> should be negative value! [m/s^2]
+
+v_cr = 5.144 * 1.5              #Limit on speed on turns (approx 10 kts -> 15 kts) [m/s]
 
 # -------------------Engine based taxiing--------------
 a_eng = 0.7                         #Acceleration engine based taxiing [m/s^2]
@@ -25,15 +23,16 @@ max_v_eng = 15.433                  #Maximum achievable velocity achieved for A3
 # --------------------Taxiway-------------------
 
 # First row is distance of straight part or corner
-# If corner, second row gives max velocity in turn-> 10; 15 or 20 [kts]
+# If corner, second row gives turn radius -> otherwise 0
+# In this code, the second row in the array is never used. However might be useful to make it more accurate
 
 # Taxiway from D14 to runway 36C
 #taxiway = np.array([[21.33, 35.52, 31.68, 43.17, 105.66, 60.91, 1383, 120, 950, 80, 60],
-#                    [0, 5.1444, 0, 5.1444, 0, 5.1444, 0, 10.2889, 0, 5.1444, 5.1444]])
+#                    [0, 38.8, 0, 44.8, 0, 49.5, 0, 105, 0, 43.6, 52.6]])
 
 # Taxiway from D14 to Polderbaan
-taxiway = np.array([[21.33,35.52,31.68,43.17,105.66,60.91,1383,120,754,140,280,70,210,40,130,160,2140,130,1690,150,360],
-                    [0,5.1444,0,5.1444,0,5.1444,0,10.2889,0,5.1444,0,10.2889,0,7.7167,0,5.1444,0,7.7167,0,5.1444,0]])
+taxiway = np.array([[21.33,35.52,31.68,43.17,105.66,60.91,1383,120,754,140,893,70,210,40,130,160,2140,130,1690,150,360],
+                    [0,38.8,0,44.8,0,49.5,0,105,0,75.8,0,90.6,0,94,0,101.5,0,172,0,107.5,0]])
 
 # Taxiwayid show whether we have straight part (st) or corner (cr)
 
@@ -71,7 +70,7 @@ for i in range(len(taxiwayid)):
         indstart = ind                                          # Starting index in while loop
         v = varray[indstart]                                    # Starting velocity in straight part
 
-        while s < taxiway[0][i] + sarray[indstart]:             #Needed distance covered [m]
+        while s < (taxiway[0][i] + sarray[indstart]):
 
             for j in range(len(v_ZET)):
                 if v>v_ZET[j] and v<=v_ZET[j+1]:
@@ -94,12 +93,6 @@ for i in range(len(taxiwayid)):
             varray = np.append(varray, v)
             aarray = np.append(aarray, a)
 
-        if i == len(taxiwayid)-1:                 # This is the last part, so no upcoming turn
-            v_cr = 5.1444                         # Last straight part, make sure max 10 kts, change?
-        else:                                     # After straight part, always a turn!
-            v_cr = taxiway[1][i+1]                # Velocity in turn is dependant on turn coming
-            print('Velocity next turn is', v_cr)
-
         if v > v_cr:            # If velocity at end of straight part is too high
 
             # Braking
@@ -111,25 +104,30 @@ for i in range(len(taxiwayid)):
             if indnew < 0:  # Added after performing verification for high accelerations
                 indnew = 0
 
+            a = d_ZET           # Use maximum deceleration for braking
+
             v = varray[indnew]  # Starting value in this while loop
             s = sarray[indnew]  # Starting value in this while loop
             t = tarray[indnew]  # Starting value in this while loop
 
-            while sarray[indnew] <= taxiway[0][i] + sarray[indstart]:  # Of course we still need to cover all distances
+            while sarray[indnew] <= (taxiway[0][i] + sarray[indstart]):  # Of course we still need to cover all distances
 
                 #v = v + a * dt
-                if v < v_cr:                #If velocity is still smaller than v_cr, room to accelerate to v_cr
+                if v < v_cr:  # For now, as first order estimate, if we brake sufficiently a small part has a velocity of v_cr before turn
 
-                    for j in range(len(v_ZET)):                         #Find acceleration at which we can accelerate
+                    for j in range(len(v_ZET)):
                         if v > v_ZET[j] and v <= v_ZET[j + 1]:
                             a = a_ZET[j]
                             break
 
                     v = v + a * dt
 
-                    if v>v_cr: # For now, as first order estimate, if we brake sufficiently a small part has a velocity of v_cr before turn
+                    if v>v_cr:
                         v = v_cr
-                        a = 0
+
+                if v == v_cr:
+                    v = v_cr
+                    a = 0
 
                 if v > v_cr:
                     a = d_ZET
@@ -137,10 +135,6 @@ for i in range(len(taxiwayid)):
 
                     if v<v_cr:
                         v = v_cr
-                        a = 0
-
-                if v == v_cr:
-                    a = 0
 
                 s = s + v * dt
                 t = t + dt
@@ -169,11 +163,6 @@ for i in range(len(taxiwayid)):
         indstart = ind  # Starting index in while loop
 
         v = varray[indstart]  # Starting velocity in the turn
-
-        if i == len(taxiwayid)-1:                 # This is the last part, so no upcoming turn
-            v_cr = 5.1444                         # Last straight part, make sure max 10 kts, change?
-        else:                                     # After straight part, always a turn!
-            v_cr = taxiway[1][i]                  # Velocity in turn is dependant on turn coming
 
         while s < (taxiway[0][i] + sarray[indstart]):
 
