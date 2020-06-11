@@ -15,8 +15,6 @@ max_d = -0.7        #Maximum deceleration achieved by ZET-system -> should be ne
 max_v = 15.433      #Maximum achievable velocity achieved by ZET-system -> 30 kts is maximum for A321 [m/s]
 #max_v = 12.8611
 
-v_cr = 5.144*1.5        #Limit on speed on turns (approx 10 kts -> 15 kts) [m/s]
-
 #-----------------Verification values--------------
 #max_a = 100
 #max_d = -100
@@ -30,20 +28,20 @@ v_cr = 5.144*1.5        #Limit on speed on turns (approx 10 kts -> 15 kts) [m/s]
 #In this code, the second row in the array is never used. However might be useful to make it more accurate
 
 #Taxiway from D14 to runway 36C
-taxiway = np.array([[21.33,35.52,31.68,43.17,105.66,60.91,1383,120,950,80,60],
-                   [0,38.8,0,44.8,0,49.5,0,105,0,43.6,52.6]])
+#taxiway = np.array([[21.33, 35.52, 31.68, 43.17, 105.66, 60.91, 1383, 120, 950, 80, 60],
+#                    [0, 5.1444, 0, 5.1444, 0, 5.1444, 0, 10.2889, 0, 5.1444, 5.1444]])
 
 #Taxiway from D14 to Polderbaan
-#taxiway = np.array([[21.33,35.52,31.68,43.17,105.66,60.91,1383,120,754,140,893,70,210,40,130,160,2140,130,1690,150,360],
-#                    [0,38.8,0,44.8,0,49.5,0,105,0,75.8,0,90.6,0,94,0,101.5,0,172,0,107.5,0]])
+taxiway = np.array([[21.33,35.52,31.68,43.17,105.66,60.91,1383,120,754,140,280,70,210,40,130,160,2140,130,1690,150,360],
+                    [0,5.1444,0,5.1444,0,5.1444,0,10.2889,0,5.1444,0,10.2889,0,7.7167,0,5.1444,0,7.7167,0,5.1444,0]])
 
 #Taxiwayid show whether we have straight part (st) or corner (cr)
 
 #Taxiway ID from D14 to runway 36C
-taxiwayid = np.array(['st','cr','st','cr','st','cr','st','cr','st','cr','cr'])
+#taxiwayid = np.array(['st','cr','st','cr','st','cr','st','cr','st','cr','cr'])
 
 #Taxiway ID from D14 to Polderbaan
-#taxiwayid = np.array(['st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st'])
+taxiwayid = np.array(['st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st'])
 
 #--------------------Code----------------------
 
@@ -89,7 +87,13 @@ for i in range(len(taxiwayid)):
             sarray = np.append(sarray,s)
             varray = np.append(varray,v)
             aarray = np.append(aarray,a)
-            
+
+        if i == len(taxiwayid)-1:                 # This is the last part, so no upcoming turn
+            v_cr = 5.1444                         # Last straight part, make sure max 10 kts, change?
+        else:                                     # After straight part, always a turn!
+            v_cr = taxiway[1][i+1]                # Velocity in turn is dependant on turn coming
+            print('Velocity next turn is', v_cr)
+
         if v>v_cr:                                          #If velocity at end of straight part is too high
             
             #Braking
@@ -140,6 +144,11 @@ for i in range(len(taxiwayid)):
         indstart = ind                              #Starting index in while loop
         
         v = varray[indstart]                        #Starting velocity in the turn
+
+        if i == len(taxiwayid)-1:                 # This is the last part, so no upcoming turn
+            v_cr = 5.1444                         # Last straight part, make sure max 10 kts, change?
+        else:                                     # After straight part, always a turn!
+            v_cr = taxiway[1][i]                  # Velocity in turn is dependant on turn coming
         
         while s<(taxiway[0][i]+sarray[indstart]):
             
@@ -181,3 +190,5 @@ plt.plot(tarray,aarray)
 plt.xlabel('Time')
 plt.ylabel('Acceleration')
 plt.show()
+
+#..

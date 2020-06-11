@@ -9,13 +9,11 @@ import matplotlib.pyplot as plt
 
 # -------------------Input data ZET-system-----------------
 
-#a_ZET = np.array([x1,x2,x3])
-#v_ZET = np.array([0,7,12,14.97])
-
-
 a_ZET = np.array([1.8, 1.8, 1.62, 1.42, 1.16, 1.01, 0.92, 0.83, 0.77, 0.72, 0.67, 0.6, 0.57, 0.55, 0.53])               #Acceleration array achieved by ZET-system [m/s^2]
 v_ZET = np.array([0, 1.8, 3.6, 5.22, 6.64, 7.80, 8.81, 9.73, 10.56, 11.33, 12.05, 12.72, 13.32, 13.89, 14.44, 14.97])   #Velocity array for acceleration ZET-system [m/s]
 d_ZET = -0.7                    #Maximum deceleration achieved by ZET-system -> should be negative value! [m/s^2]
+
+#v_cr = 5.144 * 1.5              #Limit on speed on turns (approx 10 kts -> 15 kts) [m/s]
 
 # -------------------Engine based taxiing--------------
 a_eng = 0.7                         #Acceleration engine based taxiing [m/s^2]
@@ -71,7 +69,9 @@ for i in range(len(taxiwayid)):
         indstart = ind                                          # Starting index in while loop
         v = varray[indstart]                                    # Starting velocity in straight part
 
-        while s < taxiway[0][i] + sarray[indstart]:             #Needed distance covered [m]
+        distcoverd = taxiway[0][i] + sarray[indstart]           #Needed distance covered [m]
+
+        while s < distcoverd:
 
             for j in range(len(v_ZET)):
                 if v>v_ZET[j] and v<=v_ZET[j+1]:
@@ -94,8 +94,8 @@ for i in range(len(taxiwayid)):
             varray = np.append(varray, v)
             aarray = np.append(aarray, a)
 
-        if i == len(taxiwayid)-1:                 # This is the last part, so no upcoming turn
-            v_cr = 5.1444                         # Last straight part, make sure max 10 kts, change?
+        if i == len(taxiwayid)-1:                 # This is the last part, so we need to stand still at the end of this part
+            v_cr = 0                              # Stand still [m/s]
         else:                                     # After straight part, always a turn!
             v_cr = taxiway[1][i+1]                # Velocity in turn is dependant on turn coming
             print('Velocity next turn is', v_cr)
@@ -115,7 +115,7 @@ for i in range(len(taxiwayid)):
             s = sarray[indnew]  # Starting value in this while loop
             t = tarray[indnew]  # Starting value in this while loop
 
-            while sarray[indnew] <= taxiway[0][i] + sarray[indstart]:  # Of course we still need to cover all distances
+            while sarray[indnew] <= distcoverd:  # Of course we still need to cover all distances
 
                 #v = v + a * dt
                 if v < v_cr:                #If velocity is still smaller than v_cr, room to accelerate to v_cr
@@ -159,6 +159,18 @@ for i in range(len(taxiwayid)):
                     varray = np.append(varray, v)
                     aarray = np.append(aarray, a)
 
+                if v<=0:
+                    s = distcoverd
+
+                    tarray = tarray[0:indnew]
+                    sarray = sarray[0:indnew]
+                    varray = varray[0:indnew]
+                    aarray = sarray[0:indnew]
+
+                    ind = indnew
+
+                    break
+
             ind = indnew  # Correction for extra time
 
         print('End velocity is', varray[ind], 'and end time is', tarray[ind])
@@ -169,11 +181,6 @@ for i in range(len(taxiwayid)):
         indstart = ind  # Starting index in while loop
 
         v = varray[indstart]  # Starting velocity in the turn
-
-        if i == len(taxiwayid)-1:                 # This is the last part, so no upcoming turn
-            v_cr = 5.1444                         # Last straight part, make sure max 10 kts, change?
-        else:                                     # After straight part, always a turn!
-            v_cr = taxiway[1][i]                  # Velocity in turn is dependant on turn coming
 
         while s < (taxiway[0][i] + sarray[indstart]):
 
