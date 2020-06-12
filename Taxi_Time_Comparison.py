@@ -8,14 +8,14 @@ import matplotlib.pyplot as plt
 import sys
 
 #define route "long" for limit case, "short" for performance check.
-choose = "short" 
+choose = "long" 
 
 # -------------------Input data ZET-system-----------------
 constant_a = 1.0
 a_ZET = np.array([constant_a-0.00010,constant_a-0.0009,constant_a-0.0008,constant_a-0.0007,constant_a-0.0006,constant_a-0.0005,constant_a-0.0004,constant_a-0.0003,constant_a-0.0002,constant_a+0.0002,constant_a+0.0003,constant_a+0.0004,constant_a+0.0005,constant_a+0.0006,constant_a+0.0007,constant_a+0.0008,constant_a+0.0009])
 v_ZET = np.array([0, 1.55, 3.1, 4.62, 6.04, 7.2, 8.21, 9.13, 9.96, 10.73, 11.45, 12.12, 12.72, 13.84, 14.37, 14.97, 15.433])
-Pa_ZET = np.array([0.0, 74.97143255879, 14.994286511757, 22.491429767636, 29.988573023515, 37.485716279393, 44.982859535272, 52.480002791151, 59.977146047029, 67.474289302908,  74.971432558787,  82.468575814666,89.965719070544,  97.462862326423, 104.960005582302, 112.45714883818 , 119.954292094059])
-Pv_ZET = np.array([  0.,  10.80360011,  21.60720021,  32.41080032, 43.21440042,  54.01800053,  64.82160064,  75.62520074, 86.42880085,  97.23240095, 108.03600106, 118.83960116, 129.64320127, 140.44680138, 151.25040148, 162.05400159, 172.85760169])
+Pa_ZET = np.array([0.0, 74.97143256, 149.94286512, 224.91429768,  299.88573024, 374.85716279, 449.82859535, 524.80002791, 599.77146047, 674.74289303,  749.71432559, 824.68575815, 899.65719071,  974.62862326, 1049.60005582, 1124.57148838, 1199.54292094])
+Pv_ZET = np.array([0.0,  10.80360011,  21.60720021,  32.41080032, 43.21440042,  54.01800053,  64.82160064,  75.62520074, 86.42880085,  97.23240095, 108.03600106, 118.83960116, 129.64320127, 140.44680138, 151.25040148, 162.05400159, 172.85760169])
 d_ZET = -0.7                    #Maximum deceleration achieved by ZET-system -> should be negative value! [m/s^2]
 a_eng = 0.7                         #Acceleration engine based taxiing [m/s^2]
 max_d_eng = -0.7                    #Maximum deceleration conventional taxiing-> should be negative value! [m/s^2]
@@ -486,11 +486,13 @@ plt.plot(ZETtarray,ZETvarray, label = "ZET")
 plt.plot(tarray, varray, label = "Conventional")
 plt.xlabel('Time')
 plt.ylabel('Velocity')
+plt.legend()
 plt.subplot(312)
 plt.plot(ZETtarray,ZETsarray, label = "ZET")
 plt.plot(tarray, sarray,label = "Conventional")
 plt.xlabel('Time')
 plt.ylabel('Distance')
+plt.legend()
 plt.subplot(313)
 plt.plot(ZETtarray,ZETaarray, label = "ZET")
 plt.plot(tarray, aarray, label = "Conventional")
