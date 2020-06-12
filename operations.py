@@ -28,20 +28,20 @@ max_v = 15.433      #Maximum achievable velocity achieved by ZET-system -> 30 kt
 #In this code, the second row in the array is never used. However might be useful to make it more accurate
 
 #Taxiway from D14 to runway 36C
-#taxiway = np.array([[21.33, 35.52, 31.68, 43.17, 105.66, 60.91, 1383, 120, 950, 80, 60],
-#                    [0, 5.1444, 0, 5.1444, 0, 5.1444, 0, 10.2889, 0, 5.1444, 5.1444]])
+taxiway = np.array([[21.33, 35.52, 31.68, 43.17, 105.66, 60.91, 1383, 120, 950, 80, 60],
+                    [0, 5.1444, 0, 5.1444, 0, 5.1444, 0, 10.2889, 0, 5.1444, 5.1444]])
 
 #Taxiway from D14 to Polderbaan
-taxiway = np.array([[21.33,35.52,31.68,43.17,105.66,60.91,1383,120,754,140,280,70,210,40,130,160,2140,130,1690,150,360],
-                    [0,5.1444,0,5.1444,0,5.1444,0,10.2889,0,5.1444,0,10.2889,0,7.7167,0,5.1444,0,7.7167,0,5.1444,0]])
+#taxiway = np.array([[21.33,35.52,31.68,43.17,105.66,60.91,1383,120,754,140,280,70,210,40,130,160,2140,130,1690,150,360],
+#                    [0,5.1444,0,5.1444,0,5.1444,0,10.2889,0,5.1444,0,10.2889,0,7.7167,0,5.1444,0,7.7167,0,5.1444,0]])
 
 #Taxiwayid show whether we have straight part (st) or corner (cr)
 
 #Taxiway ID from D14 to runway 36C
-#taxiwayid = np.array(['st','cr','st','cr','st','cr','st','cr','st','cr','cr'])
+taxiwayid = np.array(['st','cr','st','cr','st','cr','st','cr','st','cr','cr'])
 
 #Taxiway ID from D14 to Polderbaan
-taxiwayid = np.array(['st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st'])
+#taxiwayid = np.array(['st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st','cr','st'])
 
 #--------------------Code----------------------
 
@@ -171,6 +171,11 @@ for i in range(len(taxiwayid)):
             
         print('End velocity is', varray[ind], 'and end time is', tarray[ind])
 
+when_a = aarray[:]==max_a                       #Array with True when accelerating with max_a and False if not
+v_when_a = when_a * varray                      #Array with velocities when acceleration and otherwise velocity = 0.
+ave_v_when_a = sum(v_when_a)/sum(when_a)        #Average velocity when accelerating
+print('The average velocity [m/s] when accelerating is ',ave_v_when_a)
+
 #Plots also used for verification
 
 plt.figure()    
@@ -191,4 +196,3 @@ plt.xlabel('Time')
 plt.ylabel('Acceleration')
 plt.show()
 
-#..
