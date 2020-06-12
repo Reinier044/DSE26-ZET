@@ -157,3 +157,5 @@ plt.plot(addedweightlst[1:n],Mfuellst[0,1:n]-Mfuellst[0,0]-Mfuel_pushback, added
 plt.legend(['Range = 1538 [km]; 60% A321 flights','Range = 1806 [km]; 70% A321 flights', 'Range = 2239 [km]; 80% A321 flights', 'Range = 2816 [km]; 90% A321 flights'])
 plt.xlabel('Added weight in [kg]')
 plt.ylabel('Extra fuel consumed in [kg]')
+
+#.
