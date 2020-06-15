@@ -65,7 +65,6 @@ def EGTS_power(a, v, ratio: float, pow_wheel: int = 2):
     corresponding torque
     """
     w_rad_air       = 1.27/2    # [m] wheel radius aircraft MLG wheels
-    g_rad_w         = 0.770/2   # [m] Ring gear size
     m_plane         = 97400     # [kg] MRW
     m_car           = 20000     # [kg] Mass of external vehicle
     m_tot = m_plane + m_car     # [kg] Total mass of the system
@@ -82,17 +81,17 @@ def EGTS_power(a, v, ratio: float, pow_wheel: int = 2):
     F_mlg_w = F_mlg/pow_wheel                                # [N] Force needed  from internal per wheel
 
     T_mlg_w = F_mlg_w*w_rad_air             # [Nm] Torque for wheels (note on outer radius)
-    T_ringg_w = T_mlg_w*g_rad_w/w_rad_air   # [Nm] Torque for wheels on ring gear
-
-    if stat_traction(T_mlg_w, N_mlg_w, w_rad_air):
-        print("EGTS: Static friction checked")
-    else:
-        raise ValueError("Exceeds Static friction")
 
     w = v/w_rad_air  # [rad/s] rotational speed wheel
-    print("Main landing gear torque: {Tw} - Ring gear torque {Tg} - RPM {rpm}"
-          .format(Tw=T_mlg_w, Tg=T_ringg_w, rpm=60/(2*np.pi)*w))
-    return T_ringg_w*w, T_ringg_w
+
+    if not stat_traction(T_mlg_w, N_mlg_w, w_rad_air):
+        print("LOG: Acceleration: {a} \tTorque: {t}".format(a=a, t= T_mlg_w))
+        raise ValueError("Exceeds Static friction")
+
+    else:
+        print("Static friction check EGTS: [{t}]".format(t=True), end='\r')
+
+    return T_mlg_w*w, T_mlg_w
 
 
 def car_power(a, v, ratio, pow_wheel=4):
@@ -106,7 +105,6 @@ def car_power(a, v, ratio, pow_wheel=4):
     """
     w_rad_car_1     = 0.537     # [m] wheel radius front tires external truck
     w_rad_car_2     = 0.537     # [m] wheel radius rear tires external truck 0.496
-    a_rad_w         = 0.5715/2  # [m] Axle radius
     m_plane         = 97400     # [kg] MRW
     m_car           = 20000     # [kg] Weight of external vehicle
     m_tot = m_plane + m_car     # [kg] Total mass of the system
@@ -123,22 +121,21 @@ def car_power(a, v, ratio, pow_wheel=4):
     F_nlg_w = F_nlg/pow_wheel                                # [N] Force needed  from internal per wheel
 
     T_nlg_w_1 = F_nlg_w*w_rad_car_1            # [Nm] Torque per front wheel (note on outer radius)
-    T_a_w_1   = T_nlg_w_1*a_rad_w/w_rad_car_1  # [Nm] Torque per front axle
     T_nlg_w_2 = F_nlg_w*w_rad_car_2            # [Nm] Torque per rear wheel (note on outer radius)
-    T_a_w_2   = T_nlg_w_2*a_rad_w/w_rad_car_2  # [Nm] Torque per rear axle
 
     # Check if static friction is not exceeded
-    if stat_traction(T_nlg_w_1, N_nlg_w, w_rad_car_1):
-        print("Static friction checked rear wheels.")
-    else:
+    if not stat_traction(T_nlg_w_1, N_nlg_w, w_rad_car_1):
+        print("LOG: Acceleration: {a} \tTorque: {t} \tWheel Radius: {r}".format(a=a, t=T_nlg_w_1, r=w_rad_car_1))
         raise ValueError("Exceeds Static friction")
-    if stat_traction(T_nlg_w_2, N_nlg_w, w_rad_car_2):
-        print("Static friction checked front wheels.")
-    else:
+    elif not stat_traction(T_nlg_w_2, N_nlg_w, w_rad_car_2):
+        print("LOG: Acceleration: {a} \tTorque: {t} \tWheel Radius: {r}".format(a=a, t=T_nlg_w_2, r=w_rad_car_2))
         raise ValueError("Exceeds Static friction")
+    else:
+        print("\tStatic friction check rear wheels: [{t}]. Static friction checked front wheels: [{t}]."
+              .format(t=True), end="\r")
     w_1 = v/w_rad_car_1  # [rad/s] rotational speed wheel
     w_2 = v/w_rad_car_2  # [rad/s] rotational speed wheel
-    return T_a_w_1*w_1, T_a_w_2*w_2
+    return T_nlg_w_1*w_1, T_nlg_w_2*w_2
 
 
 def s_v_a_plotter(title, time, power, velocity, acceleration):
@@ -279,7 +276,6 @@ def static_power(velocity, time, ratio):
         i, j = car_power(0, vel, ratio)
         P_car_1.append(i/1000)
         P_car_2.append(j/1000)
-    print(T_egts)
     # Diagram w 4  plots
     fig, axs = plt.subplots(4, sharex='row')
     fig.suptitle("Power Needed for Constant Velocity")
@@ -299,16 +295,13 @@ def static_power(velocity, time, ratio):
 
     plt.tight_layout()
     plt.show()
-    return P_plane*1000, P_car_1*1000, P_car_2*1000
+    return np.array(P_plane)*1000, np.array(P_car_1)*1000, np.array(P_car_2)*1000
 
 
-def EGTS_tor_rpm_pow(torque, power, velocity):
+def EGTS_tor_rpm_pow(torque, power, velocity, GR):
     w_rad_air = 1.27/2    # [m] wheel radius aircraft MLG wheels
     w = np.array(velocity)/w_rad_air  # [rad/s]
     RPM = w*60/(2*np.pi)
-    print('RPM', RPM)
-    GR = 12
-    TR = 16
 
     T_ENG_268 = np.array([[0, 2000, 3000, 4000, 4500], [500, 500, 490, 482, 479]])
     T_ENG_348 = np.array([[0, 1200, 2600, 3500, 4000], [900, 1000, 1000, 958.33, 941.66]])
@@ -348,7 +341,7 @@ def EGTS_tor_rpm_pow(torque, power, velocity):
 
     plt.tight_layout()
     plt.show()
-    pass
+    return RPM
 
 
 def EGTS_only_perf():
@@ -371,11 +364,11 @@ def total_powerplot(P_nlg_tot, P_mlg_tot):
     N = 3
 
     # Other power components
-    preheat = 92*2 # [kW] Engine pre-heating
-    airco   = 125  # [kW] External Airco
-    startup = 0    # [kW] Start-up
-    steer   = 8    # [kW] Steering System
-    sensor  = 2    # [kW] Computers/sensors
+    preheat = 92*2  # [kW] Engine pre-heating
+    airco   = 125   # [kW] External Airco
+    startup = 700    # [kW] Start-up
+    steer   = 8     # [kW] Steering System
+    sensor  = 2     # [kW] Computers/sensors
 
     # Setting up bars
     Onaircraft = [np.array([0, P_mlg_tot + preheat+startup+sensor/2, 0]), 'Internal']
@@ -425,34 +418,58 @@ def total_powerplot(P_nlg_tot, P_mlg_tot):
 
 
 # ------------------------------------------------------- Inputs -------------------------------------------------------
-F_nlg_allow = 115000  # [N] Maximum allowed force in the NLG strut
-a = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-#[1.8, 1.8, 1.8, 1.62, 1.42, 1.16, 1.01, 0.92, 0.83, 0.77, 0.72, 0.67, 0.6, 0.57, 0.55, 0.53]  # Acceleration profile
+F_nlg_allow = 120000  # [N] Maximum allowed force in the NLG strut
 
+a = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+# a = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+# a = [1.8, 1.8, 1.8, 1.62, 1.42, 1.16, 1.01, 0.92, 0.83, 0.77, 0.72, 0.67, 0.6, 0.57, 0.55, 0.53]  # Acceleration profile
+step = 2
+gearing_ratio = 20
 # ---------------------------------------------------- Calculations ----------------------------------------------------
-t = [i for i in range((len(a)))]
+t = np.arange(0, len(a), 1/step)
+a = [1.075, 1.075, 1.075, 1.075, 1.05, 1.05, 1.05, 1.05, 1.05, 1.05, 1.05, 1.05, 1, 1, 1, 1, 1, 1, 1, 1, 0.97, 0.94, 0.89, 0.86, 0.84, 0.8, 0.76, 0.74, 0.71, 0.68, 0.66, 0.64, 0.62, 0.6]
 v = v_t(a, t)
 
+print(" Power Calculation ".center(120, '#'))
 power_ratio = opt_force_ratio(F_nlg_allow, a)
 
 P_egts_w = []
 T_egts_w = []
+
 for i in range(len(a)):
     i, j = EGTS_power(a[i], v[i], power_ratio)
     P_egts_w.append(i)
     T_egts_w.append(j)
+print("EGTS Static friction Check".center(120, '-'))
+print("\tStatic friction check EGTS: [{t}]".format(t=True), end='\n')
 
 P_car_w = np.zeros((2, len(a)))
+print("Vehicle Static friction Check".center(120, '-'))
 for i in range(len(a)):
     P_car_w[0, i], P_car_w[1, i] = car_power(a[i], v[i], power_ratio)
+print("\tStatic friction check rear wheels: [{t}].\tStatic friction checked front wheels: [{t}]."
+      .format(t=True), end='\n \n')
 
 s_v_a_plotter_egts(t, P_egts_w, T_egts_w, v, a)
-EGTS_tor_rpm_pow(T_egts_w, P_egts_w, v)
-#s_v_a_plotter('car', t, P_car_w, v, a)
+rpm = EGTS_tor_rpm_pow(T_egts_w, P_egts_w, v, gearing_ratio)
+s_v_a_plotter('car', t, P_car_w, v, a)
 
-P_egts_w_stat, P_car_w_stat_1, P_car_w_stat_2 = static_power(v, t, power_ratio)
 total_powerplot((2*max(P_car_w[0, :])+2*max(P_car_w[1, :]))/1000, 2*max(P_egts_w)/1000)
+P_egts_w_stat, P_car_w_stat_1, P_car_w_stat_2 = static_power(v, t, power_ratio)
 
-print("Total PEAK Power for Acceleration: \n  \t {P}".format(P=np.array(P_egts_w)*2+P_car_w[0,:]*2+P_car_w[1,:]*2))
+
+print(" Performance Characteristics ".center(120, '#'))
+print('\n \t\tMaximum Velocity: {v}\t Maximum Acceleration: {a}\n'.format(v=v[-1], a=max(a)))
+print("Arrays".center(120, '-'))
+print("Acceleration: \n  \t", np.array2string(np.array(a), precision=4, separator=', '), "\n")
+print("Velocity: \n  \t", np.array2string(np.array(v), precision=4, separator=', '), "\n")
+print("RPM: \n  \t", np.array2string(np.array(rpm), precision=4, separator=', '), "\n")
+
+P_acc = (np.array(P_egts_w)*2+P_car_w[0, :]*2+P_car_w[1, :]*2)/1000
+print("Total PEAK Power for Acceleration: \n  \t {P}"
+      .format(P=np.array2string((np.array(P_egts_w)*2+P_car_w[0, :]*2 + P_car_w[1, :]*2)/1000,
+                                precision=4, separator=', ')), end='\n \n')
+P_stat = (np.array(P_egts_w_stat)*2+np.array(P_car_w_stat_1)*2+np.array(P_car_w_stat_2)*2)/1000
 print("Total Power for cte Velocity: \n  \t {P}"
-      .format(P=np.array(P_egts_w_stat)*2+np.array(P_car_w_stat_1)*2+np.array(P_car_w_stat_2)*2))
+      .format(P=np.array2string((np.array(P_egts_w_stat)*2+np.array(P_car_w_stat_1)*2+np.array(P_car_w_stat_2)*2)/1000,
+                                precision=4, separator=', ')))
