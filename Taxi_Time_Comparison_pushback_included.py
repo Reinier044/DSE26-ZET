@@ -5,14 +5,13 @@ Created on Wed May 13 08:40:14 2020
 
 import numpy as np
 import matplotlib.pyplot as plt
-import sys
-from Performance_Data import a_ZET,v_ZET,Pa_ZET,Pv_ZET,d_ZET,a_eng,max_d_eng,max_v_eng,dt,thrustsetting
-from Pushback import Fin_braking_dis, taxiway, taxiwayid, totaldis,V_fin_segment, choose_2
+from Performance_Data import a_ZET,v_ZET,Pa_ZET,Pv_ZET,d_ZET,a_eng,max_d_eng,max_v_eng,dt,thrustsetting,power_cp
+from Pushback import taxiway, taxiwayid, V_fin_segment, choose_2,choose
 #define route "long" for limit case, "short" for performance check.
 
 
 # --------------------Code-ZET----------------------
-
+print('Calculating ZET taxi -',choose_2,choose,'route.')
 # Simulation parameters
 t = 0               # Starting time
 
@@ -29,11 +28,12 @@ varray = np.array([0.0000001])
 aarray = np.array([a_ZET[0]])
 parray = np.array([])
 earray = np.array([])
+status_array = np.array([taxiwayid[0]])
 
 # Simulation
 # Only works when you start with straight distance, otherwise we need small modification
 for i in range(len(taxiwayid)):
-
+    
     if taxiwayid[i] == 'st':                                    # If we have straight part
 
         #print('The ', i, 'th part is a straight part')
@@ -62,6 +62,7 @@ for i in range(len(taxiwayid)):
             sarray = np.append(sarray, s)
             varray = np.append(varray, v)
             aarray = np.append(aarray, a)
+            status_array = np.append(status_array,taxiwayid[i])
 
         if i == len(taxiwayid)-1:                 # This is the last part, so no upcoming turn
             v_cr = V_fin_segment                          # Last straight part, make sure max 10 kts, change?
@@ -124,9 +125,11 @@ for i in range(len(taxiwayid)):
                     sarray = np.append(sarray, s)
                     varray = np.append(varray, v)
                     aarray = np.append(aarray, a)
+                    status_array = np.append(status_array,taxiwayid[i])
 
             ind = indnew  # Correction for extra time
-          
+
+        
     if taxiwayid[i] == 'cr':  # If we have a corner
         indstart = ind  # Starting index in while loop
 
@@ -160,13 +163,15 @@ for i in range(len(taxiwayid)):
             sarray = np.append(sarray, s)
             varray = np.append(varray, v)
             aarray = np.append(aarray, a)
+            status_array = np.append(status_array,taxiwayid[i])
        
-
+    
+       
 if choose_2 == 'out':     
-    print('Adding pushback and coupling')
+    print('Adding pushback and coupling for ZET')
     #Implement pushback phase at beginning.
-    from Pushback import tarray_pb,aarray_pb,varray_pb,sarray_pb
-    from Pushback import tarray_cp_ZET,aarray_cp_ZET,varray_cp_ZET,sarray_cp_ZET,parray_cp_ZET,earray_cp_ZET
+    from Pushback import tarray_pb,aarray_pb,varray_pb,sarray_pb,status_array_pb
+    from Pushback import tarray_cp_ZET,aarray_cp_ZET,varray_cp_ZET,sarray_cp_ZET,status_array_cp_ZET
     
     
     tarray = np.append(tarray_pb,(tarray+tarray_pb[-1]))
@@ -177,12 +182,14 @@ if choose_2 == 'out':
     varray = np.append(varray,varray_cp_ZET)
     sarray = np.append(-sarray_pb[::-1],sarray)
     sarray = np.append(sarray,(sarray_cp_ZET+sarray[-1]))
+    status_array = np.append(status_array_pb,status_array)
+    status_array = np.append(status_array,status_array_cp_ZET)
     
 elif choose_2 == 'in':
-    print('Adding coupling for taxi in')
+    print('Adding coupling for ZET')
     #Implement pushback phase at beginning.
-    from Pushback import tarray_cp_ZET,aarray_cp_ZET,varray_cp_ZET,sarray_cp_ZET,parray_cp_ZET,earray_cp_ZET
-    from Pushback import tarray_fin,varray_fin,sarray_fin,aarray_fin 
+    from Pushback import tarray_cp_ZET,aarray_cp_ZET,varray_cp_ZET,sarray_cp_ZET,status_array_cp_ZET
+    from Pushback import tarray_fin,varray_fin,sarray_fin,aarray_fin,status_array_fin
     tarray = np.append(tarray_cp_ZET,tarray+tarray_cp_ZET[-1])
     aarray = np.append(aarray_cp_ZET,aarray)
     varray = np.append(varray_cp_ZET,varray)
@@ -191,62 +198,52 @@ elif choose_2 == 'in':
     aarray = np.append(aarray,aarray_fin)
     varray = np.append(varray,varray_fin)
     sarray = np.append(sarray,(sarray[-1]+sarray_fin))
+    status_array = np.append(status_array_cp_ZET,status_array)
+    status_array = np.append(status_array,status_array_fin)
     
     
-    
+
 print('Calculating power and energy')
 #Calculate the power for each moment in time
 flag = 0       
 while flag < len(tarray):
-    #For positive acceleration, take value for the corresponding power
-    if aarray[flag]>0:                   
-        idx = 0
-        while idx < len(a_ZET):
-            if aarray[flag]>=a_ZET[idx]:
-                p = Pa_ZET[(idx)]
-                idx = len(a_ZET)
-            else:
-                idx = idx + 1
+    if status_array[flag]!='cp':
 
-    #For constant speed, take value for corresponding power (overcome drag)           
-    if aarray[flag]==0:
         idx = 0
-        while idx <len(v_ZET):
-            if abs(varray[flag])> v_ZET[idx]:
-                if abs(varray[flag])<=v_ZET[idx+1]:
-                    p = Pv_ZET[(idx + 1)]
-                    idx = len(v_ZET)
+        while idx < len(v_ZET):
+            if abs(varray[flag])>=v_ZET[idx]:
+                if idx==(len(v_ZET)-1):
+                    p = Pv_ZET[idx]
+                    idx = len(v_ZET)+1
+                elif abs(varray[flag])< v_ZET[idx+1]:
+                    #Power required for acceleration
+                    if aarray[flag]>0:
+                        p = Pa_ZET[(idx)]
+                        idx = len(v_ZET)+1
+                    #Power required for constant velocity
+                    elif aarray[flag]==0:
+                        p = Pv_ZET[idx]
+                        idx = len(v_ZET)+1
+                    #No power required for braking
+                    elif aarray[flag]<0:
+                        p = 0
+                        idx = len(v_ZET)+1
                 else:
                     idx = idx + 1
             else:
-                idx = idx + 1
-    #For breaking, no power input required           
-    if aarray[flag]<0:
-        p = 0
-
+                if idx<(len(v_ZET)-1):
+                    idx = idx + 1
+    elif status_array[flag]=='cp':
+        p = power_cp
     
-    else:
-        p=0
-    #Calculate cumulative energy and store data.
-    e = e + p*dt
+    #Calculate cumulative energy and store data. Power in [kW], energy in [J]
+    e = e + (p*1000)*dt
     parray = np.append(parray, p)
     earray = np.append(earray, e)
     flag = flag + 1
 
 #parray = np.append(parray,parray_cp_ZET)
 #earray = np.append(earray,(earray_cp_ZET+earray[-1]))
-
-plt.figure()
-plt.subplot(211)
-plt.plot(tarray, parray)
-plt.plot(tarray, varray*70)
-plt.xlabel('Time')
-plt.ylabel('power')
-plt.subplot(212)
-plt.plot(tarray, earray)
-plt.xlabel('Time')
-plt.ylabel('energy')
-plt.show()
 
 ZETtarray = tarray
 ZETvarray = varray
@@ -256,7 +253,7 @@ ZETaarray = aarray
 
 
 # -------------------Input data CONV-system-----------------
-print('ZET calculated')
+print('Calculating CONV taxi-',choose_2,',',choose,' route.')
 
 MTOW = 97400                    #Max Takeoff weight
 Tfull = 2*155687.757            #Full thrust LEAP 1-A
@@ -483,7 +480,7 @@ for i in range(len(taxiwayid)):
             aarray = np.append(aarray, a)
 
 if choose_2 == 'out': 
-    print('Adding pushback and coupling')
+    print('Adding pushback and coupling for CONV (taxi out)')
     #Implement pushback phase at beginning.
     from Pushback import tarray_pb,aarray_pb,varray_pb,sarray_pb
     from Pushback import tarray_pb_CONV,aarray_pb_CONV,varray_pb_CONV,sarray_pb_CONV,tarray_fin,varray_fin,sarray_fin,aarray_fin  
@@ -497,6 +494,7 @@ if choose_2 == 'out':
     sarray = np.append(sarray_pb_CONV,sarray)
     sarray = np.append(sarray,(sarray_fin+sarray[-1]))
 
+#For taxi in, only add the braking segment to go to standstill at the gate
 elif choose_2 == 'in':
     from Pushback import tarray_fin,varray_fin,sarray_fin,aarray_fin 
     tarray = np.append(tarray,(tarray[-1]+tarray_fin))
@@ -504,27 +502,62 @@ elif choose_2 == 'in':
     varray = np.append(varray,varray_fin)
     sarray = np.append(sarray,(sarray[-1]+sarray_fin))
     
-# make graphs          
+print('creating figures')   
+
+#make graphs 
+plt.figure()
+plt.subplot(211)
+plt.plot(ZETtarray, parray)
+plt.plot(ZETtarray, ZETvarray*70)
+plt.xlabel('Time [s]')
+plt.ylabel('Power [kW]')
+plt.subplot(212)
+plt.plot(ZETtarray, earray)
+plt.xlabel('Time [s]')
+plt.ylabel('energy [J]')
+plt.show()
+
+fig, ax1 = plt.subplots()
+
+color = 'tab:red'
+ax1.set_xlabel('time (s)')
+ax1.set_ylabel('power', color=color)
+ax1.plot(ZETtarray, parray, color=color)
+ax1.tick_params(axis='y', labelcolor=color)
+
+ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+
+color = 'tab:blue'
+ax2.set_ylabel('velocity (m/s)', color=color)  # we already handled the x-label with ax1
+ax2.plot(ZETtarray, ZETvarray, color=color)
+ax2.tick_params(axis='y', labelcolor=color)
+
+fig.tight_layout()  # otherwise the right y-label is slightly clipped
+plt.show()
+
+         
 plt.figure()
 plt.subplot(311)
 plt.plot(ZETtarray,ZETvarray, label = "ZET")
 plt.plot(tarray, varray, label = "Conventional")
-plt.xlabel('Time')
-plt.ylabel('Velocity')
+plt.xlabel('Time [s]')
+plt.ylabel('Velocity [m/s]')
 plt.legend()
 plt.subplot(312)
 plt.plot(ZETtarray,ZETsarray, label = "ZET")
 plt.plot(tarray, sarray,label = "Conventional")
-plt.xlabel('Time')
-plt.ylabel('Distance')
+plt.xlabel('Time [s]')
+plt.ylabel('Distance [m]')
 plt.legend()
 plt.subplot(313)
 plt.plot(ZETtarray,ZETaarray, label = "ZET")
 plt.plot(tarray, aarray, label = "Conventional")
-plt.xlabel('Time')
-plt.ylabel('Acceleration')
+plt.xlabel('Time [s]')
+plt.ylabel('Acceleration [m/s^2]')
 plt.legend()
 plt.show()
+
+
 
 if ZETtarray[-1]> tarray[-1]:
     print("ZET is ", ZETtarray[-1]-tarray[-1], "seconds slower")
@@ -532,24 +565,23 @@ if ZETtarray[-1]<tarray[-1]:
     print("ZET is ", tarray[-1]-ZETtarray[-1], "seconds faster")
  
 
-tot_a = 0
-tot_t = 0
-for accel in ZETaarray:
-    if accel>0:
-        tot_a = tot_a + accel
-        tot_t = tot_t + 1
+#tot_a = 0
+#tot_t = 0
+#for accel in ZETaarray:
+#    if accel>0:
+#        tot_a = tot_a + accel
+#        tot_t = tot_t + 1
 
-print('average acceleration ZET:', tot_a/tot_t)
-print('avg speed ZET:',sum(ZETvarray)/len(ZETvarray))
+#print('average acceleration ZET:', tot_a/tot_t)
+#print('avg speed ZET:',sum(ZETvarray)/len(ZETvarray))
 
-
-
-tot_a = 0
-tot_t = 0
-for accel in aarray:
-    if accel>0:
-        tot_a = tot_a + accel
-        tot_t = tot_t + 1
-    
-print('average acceleration CONV:', tot_a/tot_t)
-print('avg speed CONV:', sum(varray)/len(varray))
+#tot_a = 0
+#tot_t = 0
+#for accel in aarray:
+#    if accel>0:
+#        tot_a = tot_a + accel
+#        tot_t = tot_t + 1
+#    
+#print('average acceleration CONV:', tot_a/tot_t)
+#print('avg speed CONV:', sum(varray)/len(varray))
+print('Total energy of cycle: ', earray[-1] ,'Joules')

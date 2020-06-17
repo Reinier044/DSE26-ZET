@@ -17,7 +17,7 @@ if choose == "long":
     #Taxiway from D14 to Polderbaan
     taxiway = np.array([[21.33,110.4, 100.6, 66.5, 1383,120,754,140,280,70,210,40,130,160,2140,130,1690,150,360],
                     [0,5.1444,0,5.1444,0,5.1444,0,10.2889,0,5.1444,0,10.2889,0,7.7167,0,5.1444,0,5.1444,0,]])
-    V_fin_segment = v_ZET[-1]           #Speed at the final segment
+    V_fin_segment = v_ZET[-2]           #Speed at the final segment
     
     if choose_2 == 'in':
         taxiway[0] = np.flip(taxiway[0])
@@ -35,7 +35,7 @@ elif choose == "short":
     # Taxiway from D14 to runway 36C
     taxiway = np.array([[21.33, 110.4, 100.6, 66.5, 1383, 120, 825, 225, 80],
                     [0, 5.1444, 0, 5.1444, 0, 5.1444, 0, 10.2889, 0, 10.2889, 0]])
-    V_fin_segment = v_ZET[-1]           #Speed at the final segment
+    V_fin_segment = taxiway[1][-2]-0.115           #Speed at the final segment
     
     if choose_2 == 'in':
         taxiway[0] = np.flip(taxiway[0])
@@ -55,9 +55,10 @@ tarray_pb = np.array([])
 sarray_pb = np.array([])
 varray_pb = np.array([])
 aarray_pb = np.array([])
+status_array_pb = np.array([])
 
 PBlength = 11.5
-power_cp = 50 #power needed for coupling
+
 #Pushback code
 
 #initial values
@@ -99,6 +100,7 @@ if choose_2 == 'out':
                 sarray_pb = np.append(sarray_pb, s)
                 varray_pb = np.append(varray_pb, v)
                 aarray_pb = np.append(aarray_pb, a)
+                status_array_pb = np.append(status_array_pb,'pb')
                 t = t + dt
             break
         # Appending values to arrays
@@ -106,6 +108,7 @@ if choose_2 == 'out':
         sarray_pb = np.append(sarray_pb, s)
         varray_pb = np.append(varray_pb, v)
         aarray_pb = np.append(aarray_pb, a)
+        status_array_pb = np.append(status_array_pb,'pb')
 
 #-------------------------Final braking segment--------------------------------
 #Brake to runway time arrays conventional taxi
@@ -113,12 +116,9 @@ tarray_fin = np.array([])
 aarray_fin = np.array([])
 varray_fin = np.array([])
 sarray_fin = np.array([])
-parray_fin = np.array([])
-earray_fin = np.array([])  
+status_array_fin = np.array([])  
 
 t = 0
-p = 0
-e = 0
 v = V_fin_segment
 a = 0
 s = 0
@@ -129,8 +129,7 @@ while v>0:
     aarray_fin = np.append(aarray_fin,a)
     sarray_fin = np.append(sarray_fin,s)
     varray_fin = np.append(varray_fin,v)
-    parray_fin = np.append(parray_fin,p)
-    earray_fin = np.append(earray_fin,e)
+    status_array_fin = np.append(status_array_fin,'st')
     t = t + dt
     v = v + a*dt
 
@@ -143,12 +142,10 @@ if choose_2 == 'out':
     aarray_cp_ZET = aarray_fin
     varray_cp_ZET = varray_fin
     sarray_cp_ZET = sarray_fin
-    parray_cp_ZET = parray_fin
-    earray_cp_ZET = earray_fin
+    status_array_cp_ZET = status_array_fin
     
     #Fill coupling arrays for ZET
     t = tarray_fin[-1]
-    e = earray_fin[-1]
     v = varray_fin[-1]
     a = 0
     s = sarray_fin[-1]
@@ -160,9 +157,7 @@ if choose_2 == 'out':
         aarray_cp_ZET = np.append(aarray_cp_ZET,a)
         varray_cp_ZET = np.append(varray_cp_ZET,v)
         sarray_cp_ZET = np.append(sarray_cp_ZET,s)
-        parray_cp_ZET = np.append(parray_cp_ZET,power_cp)    
-        earray_cp_ZET = np.append(earray_cp_ZET,e)
-        e = e+ power_cp*dt
+        status_array_cp_ZET = np.append(status_array_cp_ZET,'cp')
         t = t + dt
 
 elif choose_2 == 'in':
@@ -170,12 +165,9 @@ elif choose_2 == 'in':
     aarray_cp_ZET = np.array([])
     varray_cp_ZET = np.array([])
     sarray_cp_ZET = np.array([])
-    parray_cp_ZET = np.array([])
-    earray_cp_ZET = np.array([])
-    
+    status_array_cp_ZET = np.array([])
     #Fill coupling arrays for ZET
     t = 0
-    e = 0
     v = 0
     a = 0
     s = 0
@@ -187,18 +179,16 @@ elif choose_2 == 'in':
         aarray_cp_ZET = np.append(aarray_cp_ZET,a)
         varray_cp_ZET = np.append(varray_cp_ZET,v)
         sarray_cp_ZET = np.append(sarray_cp_ZET,s)
-        parray_cp_ZET = np.append(parray_cp_ZET,power_cp)    
-        earray_cp_ZET = np.append(earray_cp_ZET,e)
-        e = e+ power_cp*dt
+        status_array_cp_ZET = np.append(status_array_cp_ZET,'cp')
         t = t + dt
 
 
-
-if choose_2 == 'out':
-    print('ZET receives', tarray_pb[-1]+tarray_cp_ZET[-1], 'seconds')
-elif choose_2 == 'in':
-    print('ZET receives', tarray_cp_ZET[-1], 'seconds')
-    
+#to verify the right additions to the simulation
+#if choose_2 == 'out':
+#    print('ZET receives', tarray_pb[-1]+tarray_cp_ZET[-1], 'seconds')
+#elif choose_2 == 'in':
+#    print('ZET receives', tarray_cp_ZET[-1], 'seconds')
+#    
 
 
 #Coupling time arrays conventional taxi
@@ -218,9 +208,6 @@ if choose_2 == 'out':
         aarray_cp_CONV = np.append(aarray_cp_CONV,0)
         varray_cp_CONV = np.append(varray_cp_CONV,0)
         sarray_cp_CONV = np.append(sarray_cp_CONV,0)
-        parray_cp_CONV = np.append(parray_cp_CONV,power_cp)    
-        earray_cp_CONV = np.append(earray_cp_CONV,e)
-        e = e + power_cp*dt
         t = t + dt
     
     tarray_pb_CONV = np.array([])
@@ -231,11 +218,11 @@ if choose_2 == 'out':
     varray_pb_CONV = np.append(varray_pb,varray_cp_CONV)
     sarray_pb_CONV = np.array([])
     sarray_pb_CONV = np.append(-sarray_pb[::-1],sarray_cp_CONV)
-
-if choose_2 == 'out': 
-    print('CONV receives', tarray_pb_CONV[-1]+tarray_fin[-1], 'seconds')
-elif choose_2 == 'in':
-    print('CONV receives', 0, 'seconds')
+#
+#if choose_2 == 'out': 
+#    print('CONV receives', tarray_pb_CONV[-1]+tarray_fin[-1], 'seconds')
+#elif choose_2 == 'in':
+#    print('CONV receives', 0, 'seconds')
 
 #
 #Plots to check taxi
