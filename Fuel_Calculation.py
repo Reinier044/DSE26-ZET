@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 #4-> Climb
 #5-> Cruise
 #6-> Loiter (reserve fuel)
-#7 -> Descent
+#7 ->Descent
 #8 -> Landing, taxi and shut-down
 
 #------------------Input values-------------------------------------
@@ -33,7 +33,7 @@ OEW_or = 47000*g                             #OEW A321neo [N]
 W_PL = 26389*g                              #Payload weight for validation [N]
 
 #Fuel fractions from Roskam page 12
-#W1_over_Wto is calculated as constant fuel added latter on in the code
+W1_over_WTO = 0.990
 #W2_over_W1 is calculated as constant fuel added latter on in the code
 W3_over_W2 = 0.995                  #3-> Take-off
 W4_over_W3 = 0.980                  #4-> Climb
@@ -84,7 +84,6 @@ Mfuel_1_RETS = (Warm_Up_Time_RETS+Start_Up_Time)*Fuel_Cons_Taxi          #Fuel b
 Mfuel_1_engine = (Warm_Up_Time_Engine+Start_Up_Time)*Fuel_Cons_Taxi      #Fuel burned during phase 1 without RETS system is used [kg]
 
 
-
 #Variables
 Range = 4716.9                               #Range [km]
 addedweight = 0                              #Added weight by ZET-system [kg]
@@ -98,78 +97,16 @@ OEW = OEW_or + addedweight*9.81              #New OEW with ZET system included
 W5_over_W4 = 1/exp((Range*g*SFC_cruise)/(V_cruise*LD_cruise))
 
 #Brequet endurance equation for loiter
-W6_over_W5 = 1/exp((E*g*SFC_loiter)/(LD_loiter))
-#W6_over_W5 = 1                                                   #If reserve fuel is not accounted for
+#W6_over_W5 = 1/exp((E*g*SFC_loiter)/(LD_loiter))
+W6_over_W5 = 1                                                   #If reserve fuel is not accounted for
 
-Mff = W3_over_W2*W4_over_W3*W5_over_W4*W6_over_W5*W7_over_W6
+Mff = W1_over_WTO*W3_over_W2*W4_over_W3*W5_over_W4*W6_over_W5*W7_over_W6
 #Mused = 1-Mff
 
 WTO = (OEW + W_PL)/Mff                                                                  #WTO not including fuel mass for phase 1 & 2 in [N]
 #Mfuel = (Mused*WTO)/g + Mfuel_1_engine + Mfuel_taxi_outbound + Mfuel_phase_8           #Fuel used in [kg]
 
-
-Mfuel = ((1-Mff/W6_over_W5)*WTO)/g + Mfuel_1_engine + Mfuel_taxi_outbound + Mfuel_phase_8          #Fuel used in when no loiter needed [kg]
-#Mfuel = ((1-Mff)*WTO)/g + Mfuel_1_engine + Mfuel_taxi_outbound + Mfuel_phase_8
+Mfuel = ((1-Mff/W6_over_W5)*WTO)/g + Mfuel_taxi_outbound + Mfuel_phase_8          #Fuel used in when no loiter needed [kg]
 
 if (WTO/g)>MTOW:                        #Check if Maximum Take-off weight is exceeded
     print('Warning: Take off weight, ', WTO / g, ' kg, exceed MTOW of ',MTOW,'[kg]')
-
-'''
-
-#Making Plots
-n = 9                                                       #N+1 different weight between 0 and 1000, equally spaced
-#addedweightlst = np.linspace(0,2000,n)
-addedweightlst = np.array([   0.        ,  0,  222.22222222,  333.33333333, 444.44444444,  555.55555556,  666.66666667,  777.77777778,888.88888889, 1000.        ])
-Rangelst = np.array([1806,2238.49,2816, 3366.29, 3856.31])          #Max range to cover 70,80,90,95,98% of all A321 flights
-Mfuellst = np.zeros((len(Rangelst),n))                              #Matrix with columns: total fuel consumption in [kg] for given added weight; row gives range
-WTOlst = np.zeros((len(Rangelst),n))                                #List of take-off weight in [kg] for given added weight
-
-for i in range(len(Rangelst)):
-
-    Range = Rangelst[i]
-
-    # Unit conversion
-    Range = Range * 1000                            # Range [km-> m]
-
-    # Brequet Range equation used for cruise
-    W5_over_W4 = 1 / exp((Range * g * SFC_cruise) / (V_cruise * LD_cruise))
-
-    # Brequet endurance equation for loiter
-    W6_over_W5 = 1 / exp((E * g * SFC_loiter) / (LD_loiter))
-
-    for j in range(n):
-
-        # New OEW
-        OEW = OEW_or + addedweightlst[j]*9.81  # New OEW with ZET system included in [N]
-
-        #if addedweightlst[j]!=0:               #In the case the ZET-system is used
-        if j != 0:  # In the case the ZET-system is used
-            Mff =  W3_over_W2 * W4_over_W3 * W5_over_W4 * W6_over_W5 * W7_over_W6
-
-            Mused = 1 - Mff
-            #WTO = (OEW + W_PL + Fraction_Engine_On*Mfuel_taxi_inbound*g) / (1 - Mused)     # WTO in [N]
-            WTO = (OEW + W_PL) / Mff                                                # WTO in [N]
-            Mfuel = (Mused * WTO) / g + (Fraction_Engine_On-1)*Mfuel_taxi_inbound + Mfuel_phase_8     # Fuel used in [kg]
-
-        else:                                  #Baseline if ZET-system is not used and thus engine based!
-            Mff = W1_over_Wto * W3_over_W2 * W4_over_W3 * W5_over_W4 * W6_over_W5 * W7_over_W6
-            print('For Range',Range, '[m] Mff is equal to', Mff)
-            Mused = 1 - Mff
-            #WTO = (OEW + W_PL + Mfuel_taxi_inbound * g) / (1 - Mused) + Mfuel_taxi_outbound * g                 # WTO in [N]
-            WTO = (OEW + W_PL ) / (1 - Mused)                                                                    # WTO in [N]
-            Mfuel = (Mused * WTO ) / g + Mfuel_taxi_outbound + Mfuel_phase_8                                     # Fuel used in [kg]
-
-        Mfuellst[i,j]=Mfuel                       #Appending to list-> in kg
-        WTOlst[i,j]=WTO/g                         #Appending to list-> in kg
-
-        if (WTO / g) > MTOW:  # Check if Maximum Take-off weight is exceeded
-            print('Warning: Take off weight, ', WTO / g, ' kg, exceed MTOW of 97000 [kg] for added weight of', addedweightlst[j], '[kg] and range of', Rangelst[i], '[km]')
-
-plt.figure()
-plt.grid()
-plt.plot(addedweightlst[1:n],Mfuellst[0,1:n]-Mfuellst[0,0]-Mfuel_pushback, addedweightlst[1:n], Mfuellst[1,1:n]-Mfuellst[1,0]-Mfuel_pushback, addedweightlst[1:n], Mfuellst[2,1:n]-Mfuellst[2,0]-Mfuel_pushback, addedweightlst[1:n], Mfuellst[3,1:n]-Mfuellst[3,0]-Mfuel_pushback,addedweightlst[1:n], Mfuellst[4,1:n]-Mfuellst[4,0]-Mfuel_pushback)
-plt.legend(['Range = 1806 [km]; 70% A321 flights', 'Range = 2239 [km]; 80% A321 flights', 'Range = 2816 [km]; 90% A321 flights', 'Range = 3366 [km]; 95% A321 flights','Range = 3856 [km]; 98% A321 flights'])
-plt.xlabel('Added weight to the aircraft [kg]')
-plt.ylabel('Extra fuel consumed by implementing system for certain range [kg]')
-
-'''
