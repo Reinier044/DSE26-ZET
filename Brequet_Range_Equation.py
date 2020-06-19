@@ -30,7 +30,7 @@ E = 50*60                                    #Endurance of 50 min loiter at hold
 MTOW = 93500                                #Maximum take off weight for validation [kg]
 OEW_or = 47000*g                             #OEW A321neo [N]
 #W_PL = 28600*g                               #Payload weight [N]
-W_PL = 26389*g                              #Payload weight for validation [N]
+W_PL = 26390*g                              #Payload weight for validation [N]
 
 #Fuel fractions from Roskam page 12
 #W1_over_Wto is calculated as constant fuel added latter on in the code
@@ -72,7 +72,8 @@ Mfuel_taxi_outbound = Taxi_Outbound_Time * Fuel_Cons_Taxi           #Fuel consum
 
 Taxi_Inbound_Time = 9.475 * 60                                          #Average inbound taxi time excluding engine shut down time [s]
 Mfuel_taxi_inbound = Taxi_Inbound_Time * Fuel_Cons_Taxi                 #Fuel consumption engine based inbound taxiing [kg]
-Mfuel_phase_8 = Mfuel_taxi_inbound + 125                                #Fuel for shut-down neglected, fuel consumption during landing is determined to be 125 [kg]
+Mfuel_landing = 125                                                     #Fuel consumption during landing is determined to be 125 [kg]
+Mfuel_phase_8 = Mfuel_taxi_inbound + Mfuel_landing                      #Fuel for shut-down neglected
 ECDT = 1.5*60                                                           #Engine cool down time with electrical system [s]
 Fraction_Engine_On = (ECDT)/Taxi_Inbound_Time                           #If ZET-system is used, how long engine is still operating-> for now equal to engine shut down time
 
@@ -83,10 +84,10 @@ Start_Up_Time = 2*60                                                     #Engine
 Mfuel_1_RETS = (Warm_Up_Time_RETS+Start_Up_Time)*Fuel_Cons_Taxi          #Fuel burned during phase 1 when RETS system is used [kg]
 Mfuel_1_engine = (Warm_Up_Time_Engine+Start_Up_Time)*Fuel_Cons_Taxi      #Fuel burned during phase 1 without RETS system is used [kg]
 
-
+'''
 
 #Variables
-Range = 4716.9                               #Range [km]
+Range = 1500                                 #Range [km]
 addedweight = 0                              #Added weight by ZET-system [kg]
 
 Range = Range*1000                           #Range [km-> m]
@@ -105,21 +106,21 @@ Mff = W3_over_W2*W4_over_W3*W5_over_W4*W6_over_W5*W7_over_W6
 #Mused = 1-Mff
 
 WTO = (OEW + W_PL)/Mff                                                                  #WTO not including fuel mass for phase 1 & 2 in [N]
-#Mfuel = (Mused*WTO)/g + Mfuel_1_engine + Mfuel_taxi_outbound + Mfuel_phase_8           #Fuel used in [kg]
-
-
-Mfuel = ((1-Mff/W6_over_W5)*WTO)/g + Mfuel_1_engine + Mfuel_taxi_outbound + Mfuel_phase_8          #Fuel used in when no loiter needed [kg]
-#Mfuel = ((1-Mff)*WTO)/g + Mfuel_1_engine + Mfuel_taxi_outbound + Mfuel_phase_8
+Fuel_Total = ((1-Mff)*WTO)/g                                                                       #Fuel taken along at moment of take off [kg]
+Mfuel = ((1-Mff/W6_over_W5)*WTO)/g + Mfuel_1_engine + Mfuel_taxi_outbound + Mfuel_phase_8          #Fuel used when no loiter needed [kg]
 
 if (WTO/g)>MTOW:                        #Check if Maximum Take-off weight is exceeded
     print('Warning: Take off weight, ', WTO / g, ' kg, exceed MTOW of ',MTOW,'[kg]')
 
+#Validation
+print('The outbound and inbound taxi phase takes into account',(Mfuel_taxi_outbound+Mfuel_phase_8-Mfuel_landing)/Mfuel, 'of total fuel consumption')
+
 '''
 
 #Making Plots
-n = 9                                                       #N+1 different weight between 0 and 1000, equally spaced
-#addedweightlst = np.linspace(0,2000,n)
-addedweightlst = np.array([   0.        ,  0,  222.22222222,  333.33333333, 444.44444444,  555.55555556,  666.66666667,  777.77777778,888.88888889, 1000.        ])
+n = 5                                                               #N+1 different weight between 0 and 1000, equally spaced
+addedweightlst = np.append(np.array([0]),np.linspace(0,700,n))
+#addedweightlst = np.array([   0.        ,  0,  222.22222222,  333.33333333, 444.44444444,  555.55555556,  666.66666667,  777.77777778,888.88888889, 1000.        ])
 Rangelst = np.array([1806,2238.49,2816, 3366.29, 3856.31])          #Max range to cover 70,80,90,95,98% of all A321 flights
 Mfuellst = np.zeros((len(Rangelst),n))                              #Matrix with columns: total fuel consumption in [kg] for given added weight; row gives range
 WTOlst = np.zeros((len(Rangelst),n))                                #List of take-off weight in [kg] for given added weight
@@ -142,22 +143,19 @@ for i in range(len(Rangelst)):
         # New OEW
         OEW = OEW_or + addedweightlst[j]*9.81  # New OEW with ZET system included in [N]
 
-        #if addedweightlst[j]!=0:               #In the case the ZET-system is used
+        #if addedweightlst[j]!=0:               #In the case the RETS-system is used
         if j != 0:  # In the case the ZET-system is used
             Mff =  W3_over_W2 * W4_over_W3 * W5_over_W4 * W6_over_W5 * W7_over_W6
-
-            Mused = 1 - Mff
-            #WTO = (OEW + W_PL + Fraction_Engine_On*Mfuel_taxi_inbound*g) / (1 - Mused)     # WTO in [N]
-            WTO = (OEW + W_PL) / Mff                                                # WTO in [N]
-            Mfuel = (Mused * WTO) / g + (Fraction_Engine_On-1)*Mfuel_taxi_inbound + Mfuel_phase_8     # Fuel used in [kg]
+            WTO = (OEW + W_PL) / Mff                                                        # WTO in [N]
+            Mfuel = ((1-Mff/W6_over_W5)*WTO)/g + Mfuel_1_RETS + Mfuel_landing + Fraction_Engine_On*Mfuel_taxi_inbound       # Fuel used (assumes no loiter) [kg]
 
         else:                                  #Baseline if ZET-system is not used and thus engine based!
-            Mff = W1_over_Wto * W3_over_W2 * W4_over_W3 * W5_over_W4 * W6_over_W5 * W7_over_W6
+            Mff = W3_over_W2 * W4_over_W3 * W5_over_W4 * W6_over_W5 * W7_over_W6
             print('For Range',Range, '[m] Mff is equal to', Mff)
             Mused = 1 - Mff
-            #WTO = (OEW + W_PL + Mfuel_taxi_inbound * g) / (1 - Mused) + Mfuel_taxi_outbound * g                 # WTO in [N]
-            WTO = (OEW + W_PL ) / (1 - Mused)                                                                    # WTO in [N]
-            Mfuel = (Mused * WTO ) / g + Mfuel_taxi_outbound + Mfuel_phase_8                                     # Fuel used in [kg]
+
+            WTO = (OEW + W_PL ) / Mff                                                                    # WTO in [N]
+            Mfuel = ((1-Mff/W6_over_W5)*WTO)/g + Mfuel_1_engine + Mfuel_taxi_outbound + Mfuel_phase_8                        # Fuel used (assumes no loiter) [kg]
 
         Mfuellst[i,j]=Mfuel                       #Appending to list-> in kg
         WTOlst[i,j]=WTO/g                         #Appending to list-> in kg
@@ -167,9 +165,18 @@ for i in range(len(Rangelst)):
 
 plt.figure()
 plt.grid()
-plt.plot(addedweightlst[1:n],Mfuellst[0,1:n]-Mfuellst[0,0]-Mfuel_pushback, addedweightlst[1:n], Mfuellst[1,1:n]-Mfuellst[1,0]-Mfuel_pushback, addedweightlst[1:n], Mfuellst[2,1:n]-Mfuellst[2,0]-Mfuel_pushback, addedweightlst[1:n], Mfuellst[3,1:n]-Mfuellst[3,0]-Mfuel_pushback,addedweightlst[1:n], Mfuellst[4,1:n]-Mfuellst[4,0]-Mfuel_pushback)
+plt.plot(addedweightlst[1:n],Mfuellst[0,0]-Mfuellst[0,1:n], addedweightlst[1:n],Mfuellst[1,0]-Mfuellst[1,1:n], addedweightlst[1:n], Mfuellst[2,0]-Mfuellst[2,1:n], addedweightlst[1:n], Mfuellst[3,0]-Mfuellst[3,1:n],addedweightlst[1:n], Mfuellst[4,0]-Mfuellst[4,1:n])
+#plt.plot(addedweightlst[1:n],Mfuellst[0,1:n]-Mfuellst[0,0]-Mfuel_pushback, addedweightlst[1:n], Mfuellst[1,1:n]-Mfuellst[1,0]-Mfuel_pushback, addedweightlst[1:n], Mfuellst[2,1:n]-Mfuellst[2,0]-Mfuel_pushback, addedweightlst[1:n], Mfuellst[3,1:n]-Mfuellst[3,0]-Mfuel_pushback,addedweightlst[1:n], Mfuellst[4,1:n]-Mfuellst[4,0]-Mfuel_pushback)
 plt.legend(['Range = 1806 [km]; 70% A321 flights', 'Range = 2239 [km]; 80% A321 flights', 'Range = 2816 [km]; 90% A321 flights', 'Range = 3366 [km]; 95% A321 flights','Range = 3856 [km]; 98% A321 flights'])
 plt.xlabel('Added weight to the aircraft [kg]')
-plt.ylabel('Extra fuel consumed by implementing system for certain range [kg]')
+plt.ylabel('Onboard fuel savings by implementing RETS for certain range [kg]')
 
-'''
+
+#-------------------------Graveyard------------------------
+#Mfuel = (Mused*WTO)/g + Mfuel_1_engine + Mfuel_taxi_outbound + Mfuel_phase_8           #Fuel used in [kg]
+#Mfuel = ((1-Mff)*WTO)/g + Mfuel_1_engine + Mfuel_taxi_outbound + Mfuel_phase_8
+
+
+#WTO = (OEW + W_PL + Fraction_Engine_On*Mfuel_taxi_inbound*g) / (1 - Mused)     # WTO in [N]
+
+#WTO = (OEW + W_PL + Mfuel_taxi_inbound * g) / (1 - Mused) + Mfuel_taxi_outbound * g                 # WTO in [N]
