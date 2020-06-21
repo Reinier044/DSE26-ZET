@@ -157,7 +157,7 @@ def EGTS_tor_rpm_pow(torque, power, velocity, GR):
     P_ENG_348 = np.array([[0, 3000, 3500, 4000], [0, 315, 350, 370]])
 
     gs = gridspec.GridSpec(2, 2)  # Define figure layout
-    fig = plt.figure()
+    fig = plt.figure("Engine Performance Plane")
     fig.suptitle("Engine Required Acceleration Performance")
 
     ax0 = fig.add_subplot(gs[0, 0])
@@ -171,6 +171,9 @@ def EGTS_tor_rpm_pow(torque, power, velocity, GR):
     ax1.set_ylabel("Torque [Nm]")
     ax1.plot(RPM*GR, np.array(torque_out)/GR, 'red')
     ax1.plot(T_ENG_268[0, :], T_ENG_268[1, :], 'darkgray', linestyle='--')
+    ax = ax1.twinx()
+    ax.set_ylabel("EMRAX 268 PEAK", color='darkgray')
+    ax.tick_params(right=False, labelright=False)
     #ax1.plot(T_ENG_268[0, :], T_ENG_268[1, :]*2, 'darkgray')
     #ax1.plot(T_ENG_348[0, :], T_ENG_348[1, :], 'g')
     ax2 = fig.add_subplot(gs[1, 0])
@@ -183,6 +186,10 @@ def EGTS_tor_rpm_pow(torque, power, velocity, GR):
     ax3.set_xlabel("RPM")
     ax3.set_ylabel("Power [kW]")
     ax3.plot(P_ENG_268[0, :], P_ENG_268[1, :], 'darkgray', linestyle='--')
+    ax = ax3.twinx()
+    ax.set_ylabel("EMRAX 268 PEAK", color='darkgray')
+    ax.tick_params(right=False, labelright=False)
+
     #ax3.plot(P_ENG_268[0, :], P_ENG_268[1, :]*2, 'darkgray')
     #ax3.plot(P_ENG_348[0, :], P_ENG_348[1, :], 'g')
     ax3.plot(RPM*GR, power_in/1000)
@@ -313,7 +320,7 @@ def s_v_a_plotter(time, power, velocity, acceleration):
     :return: Plots showing speed, acceleration and required peak power
     """
     gs = gridspec.GridSpec(2, 2)  # Define figure layout
-    fig = plt.figure()
+    fig = plt.figure("Power Car Wheels")
     fig.suptitle("Vehicle Power")
 
     # Find maximum
@@ -327,10 +334,11 @@ def s_v_a_plotter(time, power, velocity, acceleration):
     ax0.set_xlabel("Time [s]")
     ax0.set_ylabel("Power [kW]")
     ax0.plot(time, [i/1000 for i in power[0, :]])
+    ax0.annotate(" MAN \nD2862 \n   /4 ", xy=(0, 0), xytext=(35, 140), color='gray')
     ax0.annotate("max {pow}".format(pow=round(powermax_0, 2)), xy=(timemax_0, powermax_0), xytext=(timemax_0-6,
                                         powermax_0-75), arrowprops=dict(facecolor='black',
                                             shrink=0.05, width=0.5, headwidth=5), )
-    ax0.plot(time, [200 for i in time], color='gray', linestyle='--')
+    ax0.plot(time, [160 for i in time], color='gray', linestyle='--')
     # Find maximum
     powermax_1 = max(power[1, :])  # [W] Max power
     time_idx_1 = power[1, :].argmax()  # Index Time Location max
@@ -345,7 +353,7 @@ def s_v_a_plotter(time, power, velocity, acceleration):
     ax1.annotate("max {pow}".format(pow=round(powermax_1, 2)), xy=(timemax_1, powermax_1), xytext=(timemax_1-6,
                                         powermax_1-75), arrowprops=dict(facecolor='black',
                                             width=0.5, headwidth=5), )
-    ax1.plot(time, [200 for i in time], color='gray', linestyle='--')
+    ax1.plot(time, [160 for i in time], color='gray', linestyle='--')
 
     # Velocity graphs
     ax2 = fig.add_subplot(gs[0, 0])
@@ -414,7 +422,7 @@ def static_power(velocity, time, ratio):
     axs[1].set_ylabel("Power [kW]")
     axs[1].plot(time, P_plane)
     axs[1].plot(time,[67 for i in time], color='gray', linestyle='--')
-    axs[1].annotate("EMRAX 268 \n    HV AC", xy=(0, 0), xytext=(33, 67), color='gray', rotation=90 )
+    axs[1].annotate("  EMRAX 268\nHV AC CONT", xy=(0, 0), xytext=(33, 67), color='gray', rotation=90 )
     axs[1].set_ylim(top=100)
     axs[1].set_yticks([0, np.max(P_plane), 67, 100])
     axs[2].set_title("Power Car Front Wheel")
@@ -435,71 +443,81 @@ def static_power(velocity, time, ratio):
 
 
 def EGTS_only_perf(GR):
-
+    """
+    This function calculates the egts only performance based upon the available APU power. It also plots this
+    performance.
+    :param GR: Gear ratio between MLG wheel and MLG engine
+    :return: a_acc_slow: List of accelerations [m/s2], F_acc: list of corresponding forces [N], v_slow: list of
+    speeds [m/s], time: time intervals accelerations [s]
+    """
+    #Power available
     P_APU  = 62              # [kW] Available apu power
-    P_sen  = 0
-    P_comp = 0
+    P_sen  = 0               # [kW]
+    P_comp = 0               # [kW]
     P_av_e   = (P_APU-P_sen-P_comp)*1000/2  # [W] APU power available per engine
 
-    # Efficiencies
+    # Efficiencies powertrain
     n_circuit = 0.97
     n_gear = 0.9875  # Gear efficiency (torque loss -> power loss)
     amount_gears = 2
     n_emotor = 0.95  # Electricmotor efficiency (electrical loss - power loss)
 
-    # cte
+    # Airplane characteristics
     w_rad_air       = 1.27/2    # [m] wheel radius aircraft MLG wheels
     m_plane         = 97400     # [kg] MRW
     weight_ratio    = 0.952     # [-] Landing gear weight distribution ratio
     Roll_fric       = 0.02      # [-] Rolling friction coefficient of airplane wheels
 
-    P_av_e_out = n_circuit*n_emotor*P_av_e
-    T_egts_w_em = np.array([500])
+    # Engine output torque for available power at different RPM calculation
+    P_av_e_out  = n_circuit*n_emotor*P_av_e   # [W] engine output power
+    T_egts_w_em = np.array([500])             # [Nm] engine output torque
 
-
-
-    v_slow = np.arange(0, 8.1, 0.1)  # [kts]
-    v_slow = v_slow*0.514444
-    w_slow = v_slow/w_rad_air  # [rad/s]
-    w_slow_eng = w_slow*GR
+    v_slow = np.arange(0, 8.1, 0.1)  # [kts] Velocity range
+    v_slow = v_slow*0.514444         # to m/s
+    w_slow = v_slow/w_rad_air        # [rad/s] corresponding rotational speed wheels
+    w_slow_eng = w_slow*GR           # [rad/s] corresponding rotational speed engine
     for i in range(1, len(w_slow_eng)):
         # Enough power hence full torque
         if P_av_e_out/w_slow_eng[i] > 500:
             T_egts_w_em = np.append(T_egts_w_em, [500])
+        # in sufficient power hence less torque
         elif P_av_e_out/w_slow_eng[i] < 500 and P_av_e_out/w_slow_eng[i] > 0:
             T_egts_w_em = np.append(T_egts_w_em, [P_av_e_out/w_slow_eng[i]])
+        # not enough power
         else:
             T_egts_w_em = np.add(T_egts_w_em, [0])
 
-    T_egts_w_r = n_gear**amount_gears*GR*T_egts_w_em
-    F_egts_w = T_egts_w_r/w_rad_air
+    # Torque en power @ wheels = engine * gear efficiency
+    T_egts_w_r = n_gear**amount_gears*GR*T_egts_w_em  # [W] wheel power
+    F_egts_w = T_egts_w_r/w_rad_air                   # [Nm] engine output torque
 
-    # Necessary force and Torque calculations
+    # Resultant acceleration calculation
+    # Determining friction for resultant acceleration calculation
     N_mlg   = m_plane*weight_ratio*9.81                # [N] Total normal force on the MLG
     N_mlg_w = N_mlg/4                                  # [N] Normal force per MLG wheel
     N_nlg   = m_plane*(1-weight_ratio)*9.81            # [N] Total normal force of car
     F_fric = Roll_fric*N_mlg + Roll_fric*N_nlg         # [N] Total force req to move plane at acceleration
 
-    F_acc = 2*F_egts_w-F_fric
+    # Resultant force
+    F_acc = 2*F_egts_w-F_fric  # [N]
 
-
-    a_acc_slow = F_acc/m_plane
+    # Resultant acceleration
+    a_acc_slow = F_acc/m_plane  # [m/s2]
+    # Cut-off insignificant accelerations
     v_slow = v_slow[np.where(a_acc_slow >= 0.005)]
     a_acc_slow = a_acc_slow[np.where(a_acc_slow >= 0.005)]
 
-    print(v_slow)
-    print(a_acc_slow)
-
+    # Determine time intervals for velocity intervals w corresponding acceleration profile
     time = np.array([0])
     for i in range(1, len(v_slow)):
         time = np.append(time, [v_slow[i]/a_acc_slow[i]])
-    print(time)
 
+    # Plot
     gs = gridspec.GridSpec(2, 2)  # Define figure layout
     fig = plt.figure("EGTS Only Performance")
     fig.suptitle("               EGTS Only Performance \n              Pushback")
 
-    # Pushback
+    # Pushback velocity
     ax1 = fig.add_subplot(gs[0, 0])
     ax1.set_title("Velocity")
     ax1.set_xlabel("Time [s]")
@@ -511,7 +529,6 @@ def EGTS_only_perf(GR):
     ax.set_ylabel("Velocity [kts]")
     ax.set_yticks(np.array([0, 0.5144, 2*0.5144, 3*0.5144]))
     ax.set_yticklabels(['0', '1', '2', '3'])
-
     # Pushback Acceleration graphs
     ax2 = fig.add_subplot(gs[0, 1])
     ax2.set_title("Acceleration")
@@ -520,6 +537,7 @@ def EGTS_only_perf(GR):
     ax2.set_ylim(0, max(a_acc_slow)+0.2)
     ax2.plot(time[0:31], a_acc_slow[0:31], color='r')
 
+    # Slow taxi title
     ax0 = fig.add_subplot(gs[1, :])
     ax0.axis('off')
     ax0.set_title("Slow Taxi", pad=20)
@@ -535,7 +553,6 @@ def EGTS_only_perf(GR):
     ax.set_ylabel("Velocity [kts]")
     ax.set_yticks(np.array([0, 0.5144, 2*0.5144, 3*0.5144,  4*0.5144,  5*0.5144,  6*0.5144]))
     ax.set_yticklabels(['0', '1', '2', '3', '4', '5', '6'])
-
     # Pushback Acceleration graphs
     ax4 = fig.add_subplot(gs[1, 1])
     ax4.set_title("Acceleration")
@@ -544,11 +561,12 @@ def EGTS_only_perf(GR):
     ax4.set_ylim(0, max(a_acc_slow)+0.2)
     ax4.plot(time, a_acc_slow, color='r')
 
+    # Plot & Save
     fig.tight_layout()
     fig.subplots_adjust(top=0.88)
     fig.savefig('EGTS_Only_Perf', bbox_inches='tight')
     plt.show()
-    return a_acc_slow, F_acc, v_slow
+    return a_acc_slow, F_acc, v_slow, time
 
 
 def total_powerplot(P_nlg_tot, P_mlg_tot):
@@ -582,9 +600,8 @@ def total_powerplot(P_nlg_tot, P_mlg_tot):
     width = 0.35          # the width of the bars: can also be len(x) sequence
 
 
-
     # Plot
-    p0 = plt.bar(ind, [0, 62], width, facecolor='white', edgecolor='gray', lw=4, ls='--')
+    p0 = plt.bar(ind, [0, 62], width, facecolor='white', edgecolor='gray', lw=3, ls='--')
 
     p1 = plt.bar(ind, EGTS[0], width, bottom=0)
     p2 = plt.bar(ind, Pre_heat[0], width, bottom=EGTS[0])
@@ -648,7 +665,7 @@ a = np.array([0.7,
 # [m/s^2]Wanted acceleration for complete sys
 
 step = 4  # chose the amount of intervals per second corresponding to the chosen acceleration profile
-"""
+
 # ---------------------------------------------------- Calculations ----------------------------------------------------
 t = np.arange(0, len(a)/step, 1/step)  # [s] List of time intervals
 v = v_t(a, t)  # [m/s] Velocities corresponding to chosen acceleration profile
@@ -721,12 +738,28 @@ vel = np.array(v)[[0]+idx]
 print("\n \nClean Acceleration: \n  \t", np.array2string(np.array(acc), precision=15, separator=', '), "\n")
 print("Clean Velocity: \n  \t", np.array2string(np.array(vel), precision=4, separator=', '), "\n")
 
-"""
+
 print(" EGTS Only Performance Characteristics ".center(120, '#'))
 
-a_push, F_push, v_push = EGTS_only_perf(gearing_ratio_EGTS)
+a_push, F_push, v_push, time_push = EGTS_only_perf(gearing_ratio_EGTS)
 
-print('\n \t\tMaximum Velocity: {v}\t Maximum Acceleration: {a}'.format(v=v_push[-1], a=max(a)))
-print(' \t\t\t0 -> {v} in {t} seconds'.format(v=round(v_push[-1], 2), t=0))
+print('\n \t\tMaximum Velocity: {v}\t Maximum Acceleration: {a}'.format(v=v_push[-1], a=max(a_push)))
+print(' \t\t\t0 -> {v} in {t} seconds'.format(v=round(v_push[31], 2), t=time_push[31]))
+print(' \t\t\t0 -> {v} in {t} seconds'.format(v=round(v_push[51], 2), t=time_push[51]))
+print(' \t\t\t0 -> {v} in {t} seconds'.format(v=round(v_push[-1], 2), t=time_push[-1]))
+
+for a_p in a_push:
+    # Check if static friction is not exceeded
+    if not stat_traction(a_p*97400*1.27/2, 97400*9.81, 1.27/2):
+        print("LOG: Acceleration: {a} \tTorque: {t}".format(a=a, t= T_egts_w_r))
+        raise ValueError("Exceeds Static friction")
+
+    else:
+        print("Static friction check EGTS: [{t}]".format(t=True), end='\r')
+
+print("EGTS Static friction Check".center(120, '-'))
+print("\tStatic friction check EGTS: [{t}]".format(t=True), end='\n')
+
+
 print(" Initial Force check ".center(120, '-'))
 print("\tAdequate Initial: [{t}]".format(t=init_acc(a)), end='\n')
