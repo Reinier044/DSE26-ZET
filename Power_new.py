@@ -170,11 +170,11 @@ def EGTS_tor_rpm_pow(torque, power, velocity, GR):
     ax1.set_xlabel("RPM")
     ax1.set_ylabel("Torque [Nm]")
     ax1.plot(RPM*GR, np.array(torque_out)/GR, 'red')
-    ax1.plot(T_ENG_268[0, :], T_ENG_268[1, :], 'darkgray', linestyle='--')
+    ax1.plot(T_ENG_268[0, :], T_ENG_268[1, :], 'gray', linestyle='--')
     ax = ax1.twinx()
-    ax.set_ylabel("EMRAX 268 PEAK", color='darkgray')
+    ax.set_ylabel("EMRAX 268 PEAK", color='gray')
     ax.tick_params(right=False, labelright=False)
-    #ax1.plot(T_ENG_268[0, :], T_ENG_268[1, :]*2, 'darkgray')
+    #ax1.plot(T_ENG_268[0, :], T_ENG_268[1, :]*2, 'gray')
     #ax1.plot(T_ENG_348[0, :], T_ENG_348[1, :], 'g')
     ax2 = fig.add_subplot(gs[1, 0])
     ax2.set_title("Ring Gear")
@@ -185,12 +185,12 @@ def EGTS_tor_rpm_pow(torque, power, velocity, GR):
     ax3.set_title("Engine")
     ax3.set_xlabel("RPM")
     ax3.set_ylabel("Power [kW]")
-    ax3.plot(P_ENG_268[0, :], P_ENG_268[1, :], 'darkgray', linestyle='--')
+    ax3.plot(P_ENG_268[0, :], P_ENG_268[1, :], 'gray', linestyle='--')
     ax = ax3.twinx()
-    ax.set_ylabel("EMRAX 268 PEAK", color='darkgray')
+    ax.set_ylabel("EMRAX 268 PEAK", color='gray')
     ax.tick_params(right=False, labelright=False)
 
-    #ax3.plot(P_ENG_268[0, :], P_ENG_268[1, :]*2, 'darkgray')
+    #ax3.plot(P_ENG_268[0, :], P_ENG_268[1, :]*2, 'gray')
     #ax3.plot(P_ENG_348[0, :], P_ENG_348[1, :], 'g')
     ax3.plot(RPM*GR, power_in/1000)
 
@@ -213,7 +213,7 @@ def s_v_a_plotter_egts(time, power, velocity, acceleration):
     """
     gs = gridspec.GridSpec(2, 2)  # Define figure layout
 
-    fig = plt.figure()
+    fig = plt.figure("Power Plane  Wheels")
     fig.suptitle("On Aircraft Power")
 
     # Find maximum
@@ -330,30 +330,31 @@ def s_v_a_plotter(time, power, velocity, acceleration):
     timemax_0 = time[time_idx_0]  # [s] Time Location max
 
     ax0 = fig.add_subplot(gs[1, 0])
-    ax0.set_title("Input Power Front Wheel")
+    ax0.set_title("Power per Wheel")
     ax0.set_xlabel("Time [s]")
     ax0.set_ylabel("Power [kW]")
     ax0.plot(time, [i/1000 for i in power[0, :]])
-    ax0.annotate(" MAN \nD2862 \n   /4 ", xy=(0, 0), xytext=(35, 140), color='gray')
-    ax0.annotate("max {pow}".format(pow=round(powermax_0, 2)), xy=(timemax_0, powermax_0), xytext=(timemax_0-6,
+    ax0.annotate("max {pow}".format(pow=round(powermax_0, 2)), xy=(timemax_0, powermax_0), xytext=(timemax_0-8,
                                         powermax_0-75), arrowprops=dict(facecolor='black',
                                             shrink=0.05, width=0.5, headwidth=5), )
-    ax0.plot(time, [160 for i in time], color='gray', linestyle='--')
     # Find maximum
-    powermax_1 = max(power[1, :])  # [W] Max power
+    powermax_1 = max(4*power[1, :]+50000)  # [W] Max power
     time_idx_1 = power[1, :].argmax()  # Index Time Location max
     powermax_1 = powermax_1/1000  # [kW] Max power
     timemax_1 = time[time_idx_1]  # [s] Time Location max
 
     ax1 = fig.add_subplot(gs[1, 1])
-    ax1.set_title("Input Power Rear Wheel")
+    ax1.set_title("Power Turbo Diesel Engine")
     ax1.set_xlabel("Time [s]")
     ax1.set_ylabel("Power [kW]")
-    ax1.plot(time, [i/1000 for i in power[1, :]])
+    ax1.plot(time, [4*i/1000+50 for i in power[1, :]])
     ax1.annotate("max {pow}".format(pow=round(powermax_1, 2)), xy=(timemax_1, powermax_1), xytext=(timemax_1-6,
-                                        powermax_1-75), arrowprops=dict(facecolor='black',
+                                        powermax_1-200), arrowprops=dict(facecolor='black',
                                             width=0.5, headwidth=5), )
-    ax1.plot(time, [160 for i in time], color='gray', linestyle='--')
+    ax1.plot(time, [650 for i in time], color='gray', linestyle='--')
+    ax = ax1.twinx()
+    ax.set_ylabel("MAN D2862 LE13x", color='gray')
+    ax.tick_params(right=False, labelright=False)
 
     # Velocity graphs
     ax2 = fig.add_subplot(gs[0, 0])
@@ -407,7 +408,7 @@ def static_power(velocity, time, ratio):
         P_car_2.append(j/1000)
     # Diagram w 4  plots
     P_plane = (1/n_emotor)*(1/n_gear)**amount_gears*np.array(P_plane_ring)
-    fig, axs = plt.subplots(4, sharex='row')
+    fig, axs = plt.subplots(4, sharex='row', num="Coasting Performance")
     fig.suptitle("Power Needed for Constant Velocity")
     axs[0].set_title("Velocity")
     axs[0].set_ylabel("Speed [m/s]")
@@ -576,7 +577,7 @@ def total_powerplot(P_nlg_tot, P_mlg_tot):
     :param P_mlg_tot: List with the required powers at different accelerations [W]
     :return: Nothing, just shows bar plot.
     """
-    fig = plt.figure()
+    fig = plt.figure("Power Fraction")
     N = 2  # numbers of bars
 
     # Other power components
@@ -624,7 +625,7 @@ def total_powerplot(P_nlg_tot, P_mlg_tot):
     # plt.yticks(np.arange(0, 3001, 150))
     plt.ylabel('Power [kW]')
     plt.title('Power Usage Different Cases')
-    plt.xticks(ind, ('Power\n ICO \n External VEH', 'External \n Vehicle', 'Power \n ICO \n APU Only'))
+    plt.xticks(ind, ('Power\n ICO \n External VEH', 'Power \n ICO \n APU Only'))
     plt.legend((p0[0], p1[0], p2[0], p10[0], p11[0], p12[0], p13[0]),
                ("APU available", EGTS[1], Pre_heat[1], P_car_prop[1], Steer_ex[1], Sensors[1], Airco_ex[1]),
                loc='center left', bbox_to_anchor=(1., 0.5))
@@ -744,10 +745,11 @@ print(" EGTS Only Performance Characteristics ".center(120, '#'))
 a_push, F_push, v_push, time_push = EGTS_only_perf(gearing_ratio_EGTS)
 
 print('\n \t\tMaximum Velocity: {v}\t Maximum Acceleration: {a}'.format(v=v_push[-1], a=max(a_push)))
-print(' \t\t\t0 -> {v} in {t} seconds'.format(v=round(v_push[31], 2), t=time_push[31]))
-print(' \t\t\t0 -> {v} in {t} seconds'.format(v=round(v_push[51], 2), t=time_push[51]))
-print(' \t\t\t0 -> {v} in {t} seconds'.format(v=round(v_push[-1], 2), t=time_push[-1]))
+print(' \t\t\t0 -> {v} m/s in {t} seconds'.format(v=round(v_push[31], 2), t=time_push[31]))
+print(' \t\t\t0 -> {v} m/s in {t} seconds'.format(v=round(v_push[51], 2), t=time_push[51]))
+print(' \t\t\t0 -> {v} m/s in {t} seconds'.format(v=round(v_push[-1], 2), t=time_push[-1]))
 
+print("\n \n Highest Force {F} kN".format(F=round(np.max(F_push),2)))
 for a_p in a_push:
     # Check if static friction is not exceeded
     if not stat_traction(a_p*97400*1.27/2, 97400*9.81, 1.27/2):
