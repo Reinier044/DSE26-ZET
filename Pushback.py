@@ -2,15 +2,16 @@
 """
 Created on Mon Jun 15 16:58:44 2020
 
-@author: Reini
+@author: Reinier
 """
 import numpy as np
-from Performance_Data import a_ZET,v_ZET,Pa_ZET,Pv_ZET,d_ZET,a_eng,max_d_eng,max_v_eng,dt,t_coupling_ZET,t_coupling_CONV
 import matplotlib.pyplot as plt
 
-choose = "long" 
-choose_2 = 'in'
+choose = "short" 
+choose_2 = 'out'
+taxi_method = 'full' #choose the lay out of the system (internal or full)
 
+from Performance_Data import a_ZET,v_ZET,Pa_ZET,Pv_ZET,d_ZET,a_eng,max_d_eng,max_v_eng,dt,t_coupling_ZET,t_coupling_CONV
 
 # -------------------Input data ZET-system-----------------
 if choose == "long":
@@ -218,6 +219,8 @@ if choose_2 == 'out':
     varray_pb_CONV = np.append(varray_pb,varray_cp_CONV)
     sarray_pb_CONV = np.array([])
     sarray_pb_CONV = np.append(-sarray_pb[::-1],sarray_cp_CONV)
+    
+print('Taxi length:',sum(taxiway[0]))
 #
 #if choose_2 == 'out': 
 #    print('CONV receives', tarray_pb_CONV[-1]+tarray_fin[-1], 'seconds')
