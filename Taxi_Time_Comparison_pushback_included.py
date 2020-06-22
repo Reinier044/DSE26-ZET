@@ -1,17 +1,18 @@
 """
 Created on Wed May 13 08:40:14 2020
-@author: Julian
+@author: Reinier, Julian
 """
 
 import numpy as np
 import matplotlib.pyplot as plt
-from Performance_Data import a_ZET,v_ZET,Pa_ZET,Pv_ZET,d_ZET,a_eng,max_d_eng,max_v_eng,dt,thrustsetting,power_cp
 from Pushback import taxiway, taxiwayid, V_fin_segment, choose_2,choose
+from Performance_Data import a_ZET,v_ZET,Pa_ZET,Pv_ZET,d_ZET,a_eng,max_d_eng,max_v_eng,dt,thrustsetting,power_cp,Jet_A1_sp_e
 #define route "long" for limit case, "short" for performance check.
 
-
+ZETcolor = '#0000fc'
+CONVcolor = '#8d8d91'
 # --------------------Code-ZET----------------------
-print('Calculating ZET taxi -',choose_2,choose,'route.')
+print('Calculating RETS taxi -',choose_2,choose,'route.')
 # Simulation parameters
 t = 0               # Starting time
 
@@ -168,7 +169,7 @@ for i in range(len(taxiwayid)):
     
        
 if choose_2 == 'out':     
-    print('Adding pushback and coupling for ZET')
+    print('Adding pushback and coupling for RETS')
     #Implement pushback phase at beginning.
     from Pushback import tarray_pb,aarray_pb,varray_pb,sarray_pb,status_array_pb
     from Pushback import tarray_cp_ZET,aarray_cp_ZET,varray_cp_ZET,sarray_cp_ZET,status_array_cp_ZET
@@ -184,9 +185,10 @@ if choose_2 == 'out':
     sarray = np.append(sarray,(sarray_cp_ZET+sarray[-1]))
     status_array = np.append(status_array_pb,status_array)
     status_array = np.append(status_array,status_array_cp_ZET)
+    print('time added: ',tarray_pb[-1]+tarray_cp_ZET[-1])
     
 elif choose_2 == 'in':
-    print('Adding coupling for ZET')
+    print('Adding coupling for RETS')
     #Implement pushback phase at beginning.
     from Pushback import tarray_cp_ZET,aarray_cp_ZET,varray_cp_ZET,sarray_cp_ZET,status_array_cp_ZET
     from Pushback import tarray_fin,varray_fin,sarray_fin,aarray_fin,status_array_fin
@@ -480,7 +482,7 @@ for i in range(len(taxiwayid)):
             aarray = np.append(aarray, a)
 
 if choose_2 == 'out': 
-    print('Adding pushback and coupling for CONV (taxi out)')
+    print('Adding pushback and coupling for CONV')
     #Implement pushback phase at beginning.
     from Pushback import tarray_pb,aarray_pb,varray_pb,sarray_pb
     from Pushback import tarray_pb_CONV,aarray_pb_CONV,varray_pb_CONV,sarray_pb_CONV,tarray_fin,varray_fin,sarray_fin,aarray_fin  
@@ -507,63 +509,113 @@ print('creating figures')
 #make graphs 
 plt.figure()
 plt.subplot(211)
-plt.plot(ZETtarray, parray)
-plt.plot(ZETtarray, ZETvarray*70)
+plt.plot(ZETtarray, parray, color = '#ed7b00')
+plt.plot(ZETtarray, ZETvarray*70, color = '#5c9160')
 plt.xlabel('Time [s]')
-plt.ylabel('Power [kW]')
+plt.ylabel('Power [kW]',)
 plt.subplot(212)
 plt.plot(ZETtarray, earray)
 plt.xlabel('Time [s]')
 plt.ylabel('energy [J]')
+plt.tight_layout() 
 plt.show()
+
+#fig, ax1 = plt.subplots()
+#
+#color = 'tab:red'
+#ax1.set_xlabel('time (s)')
+#ax1.set_ylabel('power', )
+#ax1.plot(ZETtarray, parray, color= '#ed7b00')
+#ax1.tick_params(axis='y', labelcolor= '#00910c')
+#
+#ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+#
+#color = 'tab:blue'
+#ax2.set_ylabel('velocity (m/s)', color=color)  # we already handled the x-label with ax1
+#ax2.plot(ZETtarray, ZETvarray, color = '#0000fc')
+#ax2.tick_params(axis='y', labelcolor=color)
+#
+#fig.tight_layout()  # otherwise the right y-label is slightly clipped
+#plt.show()
+
+         
+plt.figure()
+plt.subplot(311)
+plt.plot(ZETtarray,ZETvarray, label = "RETS", color = ZETcolor)
+plt.plot(tarray, varray, label = "Conventional", color = CONVcolor)
+plt.xlabel('Time [s]')
+plt.ylabel('Velocity [m/s]')
+plt.legend()
+plt.subplot(312)
+plt.plot(ZETtarray,ZETsarray, label = "RETS", color = ZETcolor)
+plt.plot(tarray, sarray,label = "Conventional", color = CONVcolor)
+plt.xlabel('Time [s]')
+plt.ylabel('Distance [m]')
+plt.legend()
+plt.subplot(313)
+plt.plot(ZETtarray,ZETaarray, label = "RETS", color = ZETcolor)
+plt.plot(tarray, aarray, label = "Conventional", color = CONVcolor)
+plt.xlabel('Time [s]')
+plt.ylabel('Acceleration [$m/s^2$]')
+plt.legend()
+plt.tight_layout() 
+plt.show()
+
+plt.figure()
+plt.subplot(211)
+plt.plot(ZETtarray,ZETvarray, label = "RETS", color = ZETcolor)
+plt.plot(tarray, varray, label = "Conventional", color = CONVcolor)
+plt.xlabel('Time [s]')
+plt.ylabel('Velocity [m/s]')
+plt.legend()
+plt.subplot(212)
+plt.plot(ZETtarray,ZETsarray, label = "RETS", color = ZETcolor)
+plt.plot(tarray, sarray,label = "Conventional", color = CONVcolor)
+plt.xlabel('Time [s]')
+plt.ylabel('Distance [m]')
+plt.legend()
+plt.tight_layout() 
+plt.plot()
+plt.show()
+
+
 
 fig, ax1 = plt.subplots()
 
-color = 'tab:red'
+color = '#d10007'
 ax1.set_xlabel('time (s)')
-ax1.set_ylabel('power', color=color)
-ax1.plot(ZETtarray, parray, color=color)
-ax1.tick_params(axis='y', labelcolor=color)
+ax1.set_ylabel('power [kW]', )
+ax1.plot(ZETtarray, parray, color= color)
+ax1.tick_params(axis='y', labelcolor= color)
 
 ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
 
-color = 'tab:blue'
-ax2.set_ylabel('velocity (m/s)', color=color)  # we already handled the x-label with ax1
-ax2.plot(ZETtarray, ZETvarray, color=color)
+color = '#ffbc03'
+ax2.set_ylabel('energy [MJ]')  # we already handled the x-label with ax1
+ax2.plot(ZETtarray, (earray/1000000), color = color)
 ax2.tick_params(axis='y', labelcolor=color)
 
 fig.tight_layout()  # otherwise the right y-label is slightly clipped
 plt.show()
 
-         
-plt.figure()
-plt.subplot(311)
-plt.plot(ZETtarray,ZETvarray, label = "ZET")
-plt.plot(tarray, varray, label = "Conventional")
-plt.xlabel('Time [s]')
-plt.ylabel('Velocity [m/s]')
-plt.legend()
-plt.subplot(312)
-plt.plot(ZETtarray,ZETsarray, label = "ZET")
-plt.plot(tarray, sarray,label = "Conventional")
-plt.xlabel('Time [s]')
-plt.ylabel('Distance [m]')
-plt.legend()
-plt.subplot(313)
-plt.plot(ZETtarray,ZETaarray, label = "ZET")
-plt.plot(tarray, aarray, label = "Conventional")
-plt.xlabel('Time [s]')
-plt.ylabel('Acceleration [m/s^2]')
-plt.legend()
-plt.show()
+
 
 
 
 if ZETtarray[-1]> tarray[-1]:
-    print("ZET is ", ZETtarray[-1]-tarray[-1], "seconds slower")
+    print("RETS is ", ZETtarray[-1]-tarray[-1], "seconds slower, at a duration of", ZETtarray[-1],"seconds")
+    
 if ZETtarray[-1]<tarray[-1]:
-    print("ZET is ", tarray[-1]-ZETtarray[-1], "seconds faster")
+    print("RETS is ", tarray[-1]-ZETtarray[-1], "seconds faster at a duration of", ZETtarray[-1],"seconds")
  
+
+print('Total energy of cycle: ', earray[-1] ,'Joules')
+#print('Equivalent kilograms fuel:', (earray[-1]/1000000)/Jet_A1_sp_e)
+
+
+
+
+#used for verification of the taxi simulation time outcome: 
 
 #tot_a = 0
 #tot_t = 0
@@ -584,4 +636,3 @@ if ZETtarray[-1]<tarray[-1]:
 #    
 #print('average acceleration CONV:', tot_a/tot_t)
 #print('avg speed CONV:', sum(varray)/len(varray))
-print('Total energy of cycle: ', earray[-1] ,'Joules')
