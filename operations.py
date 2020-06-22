@@ -138,7 +138,7 @@ for i in range(len(taxiwayid)):
         
         print('End velocity is', varray[ind], 'and end time is', tarray[ind])
              
-    if taxiwayid[i]=='cr':                          #If we have a corner
+    if taxiwayid[i]== 'cr':                          #If we have a corner
         
         print('The ',i,'th part is a corner')
         indstart = ind                              #Starting index in while loop
@@ -191,7 +191,7 @@ plt.ylabel('Distance')
 plt.show()
 
 plt.figure()
-plt.plot(tarray,aarray)
+plt.plot(tarray, aarray)
 plt.xlabel('Time')
 plt.ylabel('Acceleration')
 plt.show()
