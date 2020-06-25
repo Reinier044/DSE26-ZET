@@ -181,7 +181,7 @@ Fuel_Cons_APU = 0.0275                                                          
 Mfuel_APU = Taxi_Outbound_Time*Fuel_Cons_APU + (Taxi_Inbound_Time-ECDT)*Fuel_Cons_APU             #Extra fuel burned APU [kg]
 Mdiesel_RETS = 6.851946377                                                                        #Fuel for RETS in diesel coming from Power Department [kg] (excluding electricity batteries)
 Elec_RETS = 94.17210464                                                                           #Amount of electricity needed by RETS coming from Power Department [MJ]
-Mfuel_RETS = Mdiesel_RETS*(Cal_Val_Jet/Cal_Val_Diesel_2) + Elec_RETS/Cal_Val_Jet                  #Fuel for RETS in diesel [kg]
+Mfuel_RETS = Mdiesel_RETS*(Cal_Val_Diesel_2/Cal_Val_Jet) + Elec_RETS/Cal_Val_Jet                  #Fuel for RETS in diesel [kg]
 #Cal_Val_Diesel_2 =
 
 Mfuel_additional = -Mfuel_pushback+Mfuel_APU+Mfuel_RETS
