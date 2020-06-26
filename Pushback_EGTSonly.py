@@ -7,18 +7,37 @@ Created on Mon Jun 15 16:58:44 2020
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
+from Pushback import choose,choose_2,taxi_method
 
-choose = "super short" #long,short or super short
-choose_2 = 'out'
-taxi_method = 'full' #choose the lay out of the system (internal or full)
 
-from Performance_Data import a_ZET,v_ZET,Pa_ZET,Pv_ZET,d_ZET,a_eng,max_d_eng,max_v_eng,dt,t_coupling_ZET,t_coupling_CONV
-
+from Performance_Data import Pa_ZET,Pv_ZET,d_ZET,a_eng,max_d_eng,max_v_eng,dt,t_coupling_ZET,t_coupling_CONV
+a_ZET = np.array([0.1033678 , 0.1033678 , 0.1033678 , 0.1033678 , 0.1033678 ,
+       0.1033678 , 0.1033678 , 0.1033678 , 0.1033678 , 0.1033678 ,
+       0.1033678 , 0.1033678 , 0.1033678 , 0.1033678 , 0.1033678 ,
+       0.1033678 , 0.1033678 , 0.1033678 , 0.1033678 , 0.1033678 ,
+       0.1033678 , 0.1033678 , 0.1033678 , 0.1033678 , 0.1033678 ,
+       0.1033678 , 0.1033678 , 0.1033678 , 0.1033678 , 0.1033678 ,
+       0.1033678 , 0.1033678 , 0.1033678 , 0.1033678 , 0.1033678 ,
+       0.1033678 , 0.1033678 , 0.1033678 , 0.09640421, 0.08890154,
+       0.081774  , 0.07499415, 0.06853715, 0.06238047, 0.05650364,
+       0.050888  , 0.04551653, 0.04037362, 0.035445  , 0.03071755,
+       0.0261792 , 0.02181883, 0.01762616, 0.0135917 , 0.00970667,
+       0.00596291])
+v_ZET = np.array([0.       , 0.0514444, 0.1028888, 0.1543332, 0.2057776, 0.257222 ,
+       0.3086664, 0.3601108, 0.4115552, 0.4629996, 0.514444 , 0.5658884,
+       0.6173328, 0.6687772, 0.7202216, 0.771666 , 0.8231104, 0.8745548,
+       0.9259992, 0.9774436, 1.028888 , 1.0803324, 1.1317768, 1.1832212,
+       1.2346656, 1.28611  , 1.3375544, 1.3889988, 1.4404432, 1.4918876,
+       1.543332 , 1.5947764, 1.6462208, 1.6976652, 1.7491096, 1.800554 ,
+       1.8519984, 1.9034428, 1.9548872, 2.0063316, 2.057776 , 2.1092204,
+       2.1606648, 2.2121092, 2.2635536, 2.314998 , 2.3664424, 2.4178868,
+       2.4693312, 2.5207756, 2.57222  , 2.6236644, 2.6751088, 2.7265532,
+       2.7779976, 2.829444 ])
 # -------------------Input data ZET-system-----------------
 if choose == "long":
     #Taxiway from D14 to Polderbaan
     taxiway = np.array([[21.33,110.4, 100.6, 66.5, 1383,120,754,140,280,70,210,40,130,160,2140,130,1690,150,360],
-                    [0,5.1444,0,5.1444,0,5.1444,0,10.2889,0,5.1444,0,10.2889,0,7.7167,0,5.1444,0,5.1444,0,]])
+                    [0,2.829444,0,2.829444,0,2.829444,0,2.829444,0,2.829444,0,2.829444,0,2.829444,0,2.829444,0,2.829444,0,]])
     V_fin_segment = v_ZET[-2]           #Speed at the final segment
     
     if choose_2 == 'in':
@@ -36,7 +55,7 @@ if choose == "long":
 elif choose == "short":
     # Taxiway from D14 to runway 36C
     taxiway = np.array([[21.33, 110.4, 100.6, 66.5, 1383, 120, 825, 225, 80],
-                    [0, 5.1444, 0, 5.1444, 0, 5.1444, 0, 10.2889, 0, 10.2889, 0]])
+                    [0, 2.829444, 0, 2.829444, 0, 2.829444, 0, 2.829444, 0, 2.829444, 0]])
     V_fin_segment = taxiway[1][-2]-0.115           #Speed at the final segment
     
     if choose_2 == 'in':
@@ -50,8 +69,8 @@ elif choose == "short":
     
 elif choose == "super short":
     taxiway = np.array([[120, 45, 145],
-                    [0, 5.1444, 0]])
-    V_fin_segment = taxiway[1][-1]+v_ZET[-1]-5.404          #Speed at the final segment
+                    [0, 2.829444, 0]])
+    V_fin_segment = 2.829444           #Speed at the final segment
     
     taxiwayid = np.array(['st', 'cr', 'st'])
 
@@ -86,7 +105,7 @@ if choose_2 == 'out':
     while s < PBlength:             #Needed distance covered [m]
         for j in range(len(v_ZET)):
             if v<v_ZET[j]:
-                a = 0.5*a_ZET[j]
+                a = a_ZET[j]
                 break
     
         if v >= vpb_max:                                   # It can never exceed maximum speed
@@ -128,7 +147,7 @@ sarray_fin = np.array([])
 status_array_fin = np.array([])  
 
 t = 0
-v = V_fin_segment
+v = 2.829444 
 a = 0
 s = 0
 while v>0:
@@ -152,22 +171,6 @@ if choose_2 == 'out':
     varray_cp_ZET = varray_fin
     sarray_cp_ZET = sarray_fin
     status_array_cp_ZET = status_array_fin
-    
-    #Fill coupling arrays for ZET
-    t = tarray_fin[-1]
-    v = varray_fin[-1]
-    a = 0
-    s = sarray_fin[-1]
-    
-    while t <= tarray_fin[-1]+t_coupling_ZET: 
-        v = 0
-        s = s + v*dt
-        tarray_cp_ZET = np.append(tarray_cp_ZET,t)
-        aarray_cp_ZET = np.append(aarray_cp_ZET,a)
-        varray_cp_ZET = np.append(varray_cp_ZET,v)
-        sarray_cp_ZET = np.append(sarray_cp_ZET,s)
-        status_array_cp_ZET = np.append(status_array_cp_ZET,'cp')
-        t = t + dt
 
 elif choose_2 == 'in':
     tarray_cp_ZET = np.array([])
@@ -176,20 +179,6 @@ elif choose_2 == 'in':
     sarray_cp_ZET = np.array([])
     status_array_cp_ZET = np.array([])
     #Fill coupling arrays for ZET
-    t = 0
-    v = 0
-    a = 0
-    s = 0
-    
-    while t <= t_coupling_ZET: 
-        v = 0
-        s = s + v*dt
-        tarray_cp_ZET = np.append(tarray_cp_ZET,t)
-        aarray_cp_ZET = np.append(aarray_cp_ZET,a)
-        varray_cp_ZET = np.append(varray_cp_ZET,v)
-        sarray_cp_ZET = np.append(sarray_cp_ZET,s)
-        status_array_cp_ZET = np.append(status_array_cp_ZET,'cp')
-        t = t + dt
 
 
 #to verify the right additions to the simulation

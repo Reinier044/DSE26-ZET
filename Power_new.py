@@ -156,7 +156,7 @@ def EGTS_tor_rpm_pow(torque, power, velocity, GR):
     P_ENG_268 = np.array([[0, 2200, 2830+1/3, 3600, 4500], [0, 120, 150, 180, 200]])
     P_ENG_348 = np.array([[0, 3000, 3500, 4000], [0, 315, 350, 370]])
 
-    gs = gridspec.GridSpec(2, 2)  # Define figure layout
+    ''''gs = gridspec.GridSpec(2, 2)  # Define figure layout
     fig = plt.figure("Engine Performance Plane")
     fig.suptitle("Engine Required Acceleration Performance")
 
@@ -197,7 +197,7 @@ def EGTS_tor_rpm_pow(torque, power, velocity, GR):
     fig.tight_layout()
     fig.subplots_adjust(top=0.88)
     fig.savefig('Power_ENG_Plane', bbox_inches='tight')
-    plt.show()
+    #plt.show()'''
     return power_in, torque_out, RPM
 
 
@@ -213,8 +213,8 @@ def s_v_a_plotter_egts(time, power, velocity, acceleration):
     """
     gs = gridspec.GridSpec(2, 2)  # Define figure layout
 
-    fig = plt.figure("Power Plane  Wheels")
-    fig.suptitle("On Aircraft Power")
+#    fig = plt.figure("Power Plane  Wheels")
+#    fig.suptitle("On Aircraft Power")
 
     # Find maximum
     powermax = max(power)  # [W] Max power
@@ -222,40 +222,40 @@ def s_v_a_plotter_egts(time, power, velocity, acceleration):
     powermax = powermax/1000   # [kW] Max power
     timemax = time[time_idx]  # [s] Time Location max
 
-    ax1 = fig.add_subplot(gs[1, :])
-    ax1.set_title("Input Power/Gear")
-    ax1.set_xlabel("Time [s]")
-    ax1.set_ylabel("Power [kW]")
-    ax1.plot(time, [i/1000 for i in power])
-    ax1.annotate("max {pow}".format(pow=round(powermax, 2)), xy=(timemax, powermax), xytext=(timemax, powermax-100),
-                 arrowprops=dict(facecolor='black', shrink=0.06, width=0.6, headwidth=9),)
+#    ax1 = fig.add_subplot(gs[1, :])
+#    ax1.set_title("Input Power/Gear")
+#    ax1.set_xlabel("Time [s]")
+#    ax1.set_ylabel("Power [kW]")
+#    ax1.plot(time, [i/1000 for i in power])
+#    ax1.annotate("max {pow}".format(pow=round(powermax, 2)), xy=(timemax, powermax), xytext=(timemax, powermax-100),
+#                 arrowprops=dict(facecolor='black', shrink=0.06, width=0.6, headwidth=9),)
 
     # Velocity graphs
-    ax2 = fig.add_subplot(gs[0, 0])
-    ax2.set_title("Velocity")
-    ax2.set_xlabel("Time [s]")
-    ax2.set_ylabel("Velocity [m/s]")
-    ax2.yaxis.set_ticks_position('left')
-    ax2.plot(time, velocity, color='g')
-    ax2.set_yticks([0, 5, 10, 15])
-    ax0 = ax2.twinx()
-    ax0.plot(time, velocity, color='g')
-    ax0.set_ylabel("Velocity [kts]")
-    ax0.set_yticks(np.array([0, 5.144, 2*5.144, 3*5.144]))
-    ax0.set_yticklabels(['0', '10', '20', '30'])
-
-    # Acceleration graphs
-    ax3 = fig.add_subplot(gs[0, 1])
-    ax3.set_title("Acceleration")
-    ax3.set_xlabel("Time [s]")
-    ax3.set_ylabel("Acceleration [$m/s^2$]")
-    ax3.set_ylim(0, max(acceleration)+0.2)
-    ax3.plot(time, acceleration, color='r')
-
-    # Plot
-    fig.tight_layout()
-    fig.savefig('Power_Wheel_Plane', bbox_inches='tight')
-    plt.show()
+#    ax2 = fig.add_subplot(gs[0, 0])
+#    ax2.set_title("Velocity")
+#    ax2.set_xlabel("Time [s]")
+#    ax2.set_ylabel("Velocity [m/s]")
+#    ax2.yaxis.set_ticks_position('left')
+#    ax2.plot(time, velocity, color='g')
+#    ax2.set_yticks([0, 5, 10, 15])
+#    ax0 = ax2.twinx()
+#    ax0.plot(time, velocity, color='g')
+#    ax0.set_ylabel("Velocity [kts]")
+#    ax0.set_yticks(np.array([0, 5.144, 2*5.144, 3*5.144]))
+#    ax0.set_yticklabels(['0', '10', '20', '30'])
+#
+#    # Acceleration graphs
+#    ax3 = fig.add_subplot(gs[0, 1])
+#    ax3.set_title("Acceleration")
+#    ax3.set_xlabel("Time [s]")
+#    ax3.set_ylabel("Acceleration [$m/s^2$]")
+#    ax3.set_ylim(0, max(acceleration)+0.2)
+#    ax3.plot(time, acceleration, color='r')
+#
+#    # Plot
+#    fig.tight_layout()
+#    fig.savefig('Power_Wheel_Plane', bbox_inches='tight')
+#    plt.show()
     pass
 
 
@@ -329,58 +329,58 @@ def s_v_a_plotter(time, power, velocity, acceleration):
     powermax_0 = powermax_0/1000  # [kW] Max power
     timemax_0 = time[time_idx_0]  # [s] Time Location max
 
-    ax0 = fig.add_subplot(gs[1, 0])
-    ax0.set_title("Power per Wheel")
-    ax0.set_xlabel("Time [s]")
-    ax0.set_ylabel("Power [kW]")
-    ax0.plot(time, [i/1000 for i in power[0, :]])
-    ax0.annotate("max {pow}".format(pow=round(powermax_0, 2)), xy=(timemax_0, powermax_0), xytext=(timemax_0-8,
-                                        powermax_0-75), arrowprops=dict(facecolor='black',
-                                            shrink=0.05, width=0.5, headwidth=5), )
+#    ax0 = fig.add_subplot(gs[1, 0])
+#    ax0.set_title("Power per Wheel")
+#    ax0.set_xlabel("Time [s]")
+#    ax0.set_ylabel("Power [kW]")
+#    ax0.plot(time, [i/1000 for i in power[0, :]])
+#    ax0.annotate("max {pow}".format(pow=round(powermax_0, 2)), xy=(timemax_0, powermax_0), xytext=(timemax_0-8,
+#                                        powermax_0-75), arrowprops=dict(facecolor='black',
+#                                            shrink=0.05, width=0.5, headwidth=5), )
     # Find maximum
     powermax_1 = max(4*power[1, :]+50000)  # [W] Max power
     time_idx_1 = power[1, :].argmax()  # Index Time Location max
     powermax_1 = powermax_1/1000  # [kW] Max power
     timemax_1 = time[time_idx_1]  # [s] Time Location max
 
-    ax1 = fig.add_subplot(gs[1, 1])
-    ax1.set_title("Power Turbo Diesel Engine")
-    ax1.set_xlabel("Time [s]")
-    ax1.set_ylabel("Power [kW]")
-    ax1.plot(time, [4*i/1000+50 for i in power[1, :]])
-    ax1.annotate("max {pow}".format(pow=round(powermax_1, 2)), xy=(timemax_1, powermax_1), xytext=(timemax_1-6,
-                                        powermax_1-200), arrowprops=dict(facecolor='black',
-                                            width=0.5, headwidth=5), )
-    ax1.plot(time, [650 for i in time], color='gray', linestyle='--')
-    ax = ax1.twinx()
-    ax.set_ylabel("MAN D2862 LE13x", color='gray')
-    ax.tick_params(right=False, labelright=False)
-
-    # Velocity graphs
-    ax2 = fig.add_subplot(gs[0, 0])
-    ax2.set_title("Velocity")
-    ax2.set_xlabel("Time [s]")
-    ax2.set_ylabel("Velocity [m/s]")
-    ax2.plot(time, velocity, color='g')
-    ax2.set_yticks([0, 5, 10, 15])
-    ax = ax2.twinx()
-    ax.plot(time, velocity, color='g')
-    ax.set_ylabel("Velocity [kts]")
-    ax.set_yticks(np.array([0, 5.144, 2*5.144, 3*5.144]))
-    ax.set_yticklabels(['0', '10', '20', '30'])
-
-    # Acceleration graphs
-    ax3 = fig.add_subplot(gs[0, 1])
-    ax3.set_title("Acceleration")
-    ax3.set_xlabel("Time [s]")
-    ax3.set_ylabel("Acceleration [$m/s^2$]")
-    ax3.set_ylim(0, max(acceleration)+0.05)
-    ax3.plot(time, acceleration, color='r')
-
-    # Plot
-    fig.tight_layout()
-    fig.savefig('Power_Wheel_Car', bbox_inches='tight')
-    plt.show()
+#    ax1 = fig.add_subplot(gs[1, 1])
+#    ax1.set_title("Power Turbo Diesel Engine")
+#    ax1.set_xlabel("Time [s]")
+#    ax1.set_ylabel("Power [kW]")
+#    ax1.plot(time, [4*i/1000+50 for i in power[1, :]])
+#    ax1.annotate("max {pow}".format(pow=round(powermax_1, 2)), xy=(timemax_1, powermax_1), xytext=(timemax_1-6,
+#                                        powermax_1-200), arrowprops=dict(facecolor='black',
+#                                            width=0.5, headwidth=5), )
+#    ax1.plot(time, [650 for i in time], color='gray', linestyle='--')
+#    ax = ax1.twinx()
+#    ax.set_ylabel("MAN D2862 LE13x", color='gray')
+#    ax.tick_params(right=False, labelright=False)
+#
+#    # Velocity graphs
+#    ax2 = fig.add_subplot(gs[0, 0])
+#    ax2.set_title("Velocity")
+#    ax2.set_xlabel("Time [s]")
+#    ax2.set_ylabel("Velocity [m/s]")
+#    ax2.plot(time, velocity, color='g')
+#    ax2.set_yticks([0, 5, 10, 15])
+#    ax = ax2.twinx()
+#    ax.plot(time, velocity, color='g')
+#    ax.set_ylabel("Velocity [kts]")
+#    ax.set_yticks(np.array([0, 5.144, 2*5.144, 3*5.144]))
+#    ax.set_yticklabels(['0', '10', '20', '30'])
+#
+#    # Acceleration graphs
+#    ax3 = fig.add_subplot(gs[0, 1])
+#    ax3.set_title("Acceleration")
+#    ax3.set_xlabel("Time [s]")
+#    ax3.set_ylabel("Acceleration [$m/s^2$]")
+#    ax3.set_ylim(0, max(acceleration)+0.05)
+#    ax3.plot(time, acceleration, color='r')
+#
+#    # Plot
+#    fig.tight_layout()
+#    fig.savefig('Power_Wheel_Car', bbox_inches='tight')
+#    plt.show()
     pass
 
 
@@ -408,38 +408,38 @@ def static_power(velocity, time, ratio):
         P_car_2.append(j/1000)
     # Diagram w 4  plots
     P_plane = (1/n_emotor)*(1/n_gear)**amount_gears*np.array(P_plane_ring)
-    fig, axs = plt.subplots(4, sharex='row', num="Coasting Performance")
-    fig.suptitle("Power Needed for Constant Velocity")
-    axs[0].set_title("Velocity")
-    axs[0].set_ylabel("Speed [m/s]")
-    axs[0].plot(time, velocity, color='g')
-    axs[0].set_yticks([0, 5, 10, 15])
-    ax0 = axs[0].twinx()
-    ax0.plot(time, velocity, color='g')
-    ax0.set_ylabel("Velocity [kts]")
-    ax0.set_yticks(np.array([0, 5.144, 2*5.144, 3*5.144]))
-    ax0.set_yticklabels(['0', '10', '20', '30'])
-    axs[1].set_title("Power EGTS/Gear")
-    axs[1].set_ylabel("Power [kW]")
-    axs[1].plot(time, P_plane)
-    axs[1].plot(time,[67 for i in time], color='gray', linestyle='--')
-    axs[1].annotate("  EMRAX 268\nHV AC CONT", xy=(0, 0), xytext=(33, 67), color='gray', rotation=90 )
-    axs[1].set_ylim(top=100)
-    axs[1].set_yticks([0, np.max(P_plane), 67, 100])
-    axs[2].set_title("Power Car Front Wheel")
-    axs[2].set_ylabel("Power [kW]")
-    axs[2].plot(time, P_car_1)
-    axs[2].set_yticks([0, 30, 60])
-    axs[3].set_title("Power Car Rear Wheel")
-    axs[3].set_ylabel("Power [kW]")
-    axs[3].set_xlabel("Time [s]")
-    axs[3].plot(time, P_car_2)
-    axs[3].set_yticks([0, 30, 60])
-
-    fig.tight_layout()
-    fig.subplots_adjust(top=0.88)
-    fig.savefig('Stat_Power_Mov', bbox_inches='tight')
-    plt.show()
+#    fig, axs = plt.subplots(4, sharex='row', num="Coasting Performance")
+#    fig.suptitle("Power Needed for Constant Velocity")
+#    axs[0].set_title("Velocity")
+#    axs[0].set_ylabel("Speed [m/s]")
+#    axs[0].plot(time, velocity, color='g')
+#    axs[0].set_yticks([0, 5, 10, 15])
+#    ax0 = axs[0].twinx()
+#    ax0.plot(time, velocity, color='g')
+#    ax0.set_ylabel("Velocity [kts]")
+#    ax0.set_yticks(np.array([0, 5.144, 2*5.144, 3*5.144]))
+#    ax0.set_yticklabels(['0', '10', '20', '30'])
+#    axs[1].set_title("Power EGTS/Gear")
+#    axs[1].set_ylabel("Power [kW]")
+#    axs[1].plot(time, P_plane)
+#    axs[1].plot(time,[67 for i in time], color='gray', linestyle='--')
+#    axs[1].annotate("  EMRAX 268\nHV AC CONT", xy=(0, 0), xytext=(33, 67), color='gray', rotation=90 )
+#    axs[1].set_ylim(top=100)
+#    axs[1].set_yticks([0, np.max(P_plane), 67, 100])
+#    axs[2].set_title("Power Car Front Wheel")
+#    axs[2].set_ylabel("Power [kW]")
+#    axs[2].plot(time, P_car_1)
+#    axs[2].set_yticks([0, 30, 60])
+#    axs[3].set_title("Power Car Rear Wheel")
+#    axs[3].set_ylabel("Power [kW]")
+#    axs[3].set_xlabel("Time [s]")
+#    axs[3].plot(time, P_car_2)
+#    axs[3].set_yticks([0, 30, 60])
+#
+#    fig.tight_layout()
+#    fig.subplots_adjust(top=0.88)
+#    fig.savefig('Stat_Power_Mov', bbox_inches='tight')
+#    plt.show()
     return np.array(P_plane)*1000, np.array(P_car_1)*1000, np.array(P_car_2)*1000
 
 
@@ -514,59 +514,59 @@ def EGTS_only_perf(GR):
         time = np.append(time, [v_slow[i]/a_acc_slow[i]])
 
     # Plot
-    gs = gridspec.GridSpec(2, 2)  # Define figure layout
-    fig = plt.figure("EGTS Only Performance")
-    fig.suptitle("               EGTS Only Performance \n              Pushback")
-
-    # Pushback velocity
-    ax1 = fig.add_subplot(gs[0, 0])
-    ax1.set_title("Velocity")
-    ax1.set_xlabel("Time [s]")
-    ax1.set_ylabel("Velocity [m/s]")
-    ax1.plot(time[0:31], v_slow[0:31], color='g')
-    ax1.set_yticks([0, 0.5, 1, 1.5])
-    ax = ax1.twinx()
-    ax.plot(time[0:31], v_slow[0:31], color='g')
-    ax.set_ylabel("Velocity [kts]")
-    ax.set_yticks(np.array([0, 0.5144, 2*0.5144, 3*0.5144]))
-    ax.set_yticklabels(['0', '1', '2', '3'])
-    # Pushback Acceleration graphs
-    ax2 = fig.add_subplot(gs[0, 1])
-    ax2.set_title("Acceleration")
-    ax2.set_xlabel("Time [s]")
-    ax2.set_ylabel("Acceleration [$m/s^2$]")
-    ax2.set_ylim(0, max(a_acc_slow)+0.2)
-    ax2.plot(time[0:31], a_acc_slow[0:31], color='r')
-
-    # Slow taxi title
-    ax0 = fig.add_subplot(gs[1, :])
-    ax0.axis('off')
-    ax0.set_title("Slow Taxi", pad=20)
-    # Slow taxi
-    ax3 = fig.add_subplot(gs[1, 0])
-    ax3.set_title("Velocity")
-    ax3.set_xlabel("Time [s]")
-    ax3.set_ylabel("Velocity [m/s]")
-    ax3.plot(time, v_slow, color='g')
-    ax3.plot(time, [2.88 for i in time], color='gray', linestyle='--')
-    ax3.set_yticks([0, 0.5, 1, 1.5, 2, 2.5, 3])
-    ax = ax3.twinx()
-    ax.set_ylabel("Velocity [kts]")
-    ax.set_yticks(np.array([0, 0.5144, 2*0.5144, 3*0.5144,  4*0.5144,  5*0.5144,  6*0.5144]))
-    ax.set_yticklabels(['0', '1', '2', '3', '4', '5', '6'])
-    # Pushback Acceleration graphs
-    ax4 = fig.add_subplot(gs[1, 1])
-    ax4.set_title("Acceleration")
-    ax4.set_xlabel("Time [s]")
-    ax4.set_ylabel("Acceleration [$m/s^2$]")
-    ax4.set_ylim(0, max(a_acc_slow)+0.2)
-    ax4.plot(time, a_acc_slow, color='r')
+#    gs = gridspec.GridSpec(2, 2)  # Define figure layout
+#    fig = plt.figure("EGTS Only Performance")
+#    fig.suptitle("               EGTS Only Performance \n              Pushback")
+#
+#    # Pushback velocity
+#    ax1 = fig.add_subplot(gs[0, 0])
+#    ax1.set_title("Velocity")
+#    ax1.set_xlabel("Time [s]")
+#    ax1.set_ylabel("Velocity [m/s]")
+#    ax1.plot(time[0:31], v_slow[0:31], color='g')
+#    ax1.set_yticks([0, 0.5, 1, 1.5])
+#    ax = ax1.twinx()
+#    ax.plot(time[0:31], v_slow[0:31], color='g')
+#    ax.set_ylabel("Velocity [kts]")
+#    ax.set_yticks(np.array([0, 0.5144, 2*0.5144, 3*0.5144]))
+#    ax.set_yticklabels(['0', '1', '2', '3'])
+#    # Pushback Acceleration graphs
+#    ax2 = fig.add_subplot(gs[0, 1])
+#    ax2.set_title("Acceleration")
+#    ax2.set_xlabel("Time [s]")
+#    ax2.set_ylabel("Acceleration [$m/s^2$]")
+#    ax2.set_ylim(0, max(a_acc_slow)+0.2)
+#    ax2.plot(time[0:31], a_acc_slow[0:31], color='r')
+#
+#    # Slow taxi title
+#    ax0 = fig.add_subplot(gs[1, :])
+#    ax0.axis('off')
+#    ax0.set_title("Slow Taxi", pad=20)
+#    # Slow taxi
+#    ax3 = fig.add_subplot(gs[1, 0])
+#    ax3.set_title("Velocity")
+#    ax3.set_xlabel("Time [s]")
+#    ax3.set_ylabel("Velocity [m/s]")
+#    ax3.plot(time, v_slow, color='g')
+#    ax3.plot(time, [2.88 for i in time], color='gray', linestyle='--')
+#    ax3.set_yticks([0, 0.5, 1, 1.5, 2, 2.5, 3])
+#    ax = ax3.twinx()
+#    ax.set_ylabel("Velocity [kts]")
+#    ax.set_yticks(np.array([0, 0.5144, 2*0.5144, 3*0.5144,  4*0.5144,  5*0.5144,  6*0.5144]))
+#    ax.set_yticklabels(['0', '1', '2', '3', '4', '5', '6'])
+#    # Pushback Acceleration graphs
+#    ax4 = fig.add_subplot(gs[1, 1])
+#    ax4.set_title("Acceleration")
+#    ax4.set_xlabel("Time [s]")
+#    ax4.set_ylabel("Acceleration [$m/s^2$]")
+#    ax4.set_ylim(0, max(a_acc_slow)+0.2)
+#    ax4.plot(time, a_acc_slow, color='r')
 
     # Plot & Save
-    fig.tight_layout()
-    fig.subplots_adjust(top=0.88)
-    fig.savefig('EGTS_Only_Perf', bbox_inches='tight')
-    plt.show()
+#    fig.tight_layout()
+#    fig.subplots_adjust(top=0.88)
+#    fig.savefig('EGTS_Only_Perf', bbox_inches='tight')
+    #plt.show()
     return a_acc_slow, F_acc, v_slow, time
 
 
@@ -577,7 +577,7 @@ def total_powerplot(P_nlg_tot, P_mlg_tot):
     :param P_mlg_tot: List with the required powers at different accelerations [W]
     :return: Nothing, just shows bar plot.
     """
-    fig = plt.figure("Power Fraction")
+#    fig = plt.figure("Power Fraction")
     N = 2  # numbers of bars
 
     # Other power components
@@ -602,49 +602,49 @@ def total_powerplot(P_nlg_tot, P_mlg_tot):
 
 
     # Plot
-    p0 = plt.bar(ind, [0, 62], width, facecolor='white', edgecolor='gray', lw=3, ls='--')
-
-    p1 = plt.bar(ind, EGTS[0], width, bottom=0)
-    p2 = plt.bar(ind, Pre_heat[0], width, bottom=EGTS[0])
-    p3 = plt.bar(ind, Start_up[0], width, bottom=EGTS[0]+Pre_heat[0])
-
-    p10 = plt.bar(ind, P_car_prop[0], width, bottom=EGTS[0]+Pre_heat[0]+Start_up[0])
-    p11 = plt.bar(ind, Steer_ex[0], width,
-                 bottom=EGTS[0]+Pre_heat[0]+Start_up[0]+P_car_prop[0])
-    p12 = plt.bar(ind, Sensors[0], width,
-                 bottom=EGTS[0]+Pre_heat[0]+Start_up[0]+P_car_prop[0]+Steer_ex[0])
-    p13 = plt.bar(ind, Airco_ex[0], width, bottom=EGTS[0]+Pre_heat[0]+Start_up[0]+P_car_prop[0]+Steer_ex[0]+Sensors[0])
+#    p0 = plt.bar(ind, [0, 62], width, facecolor='white', edgecolor='gray', lw=3, ls='--')
+#
+#    p1 = plt.bar(ind, EGTS[0], width, bottom=0)
+#    p2 = plt.bar(ind, Pre_heat[0], width, bottom=EGTS[0])
+#    p3 = plt.bar(ind, Start_up[0], width, bottom=EGTS[0]+Pre_heat[0])
+#
+#    p10 = plt.bar(ind, P_car_prop[0], width, bottom=EGTS[0]+Pre_heat[0]+Start_up[0])
+#    p11 = plt.bar(ind, Steer_ex[0], width,
+#                 bottom=EGTS[0]+Pre_heat[0]+Start_up[0]+P_car_prop[0])
+#    p12 = plt.bar(ind, Sensors[0], width,
+#                 bottom=EGTS[0]+Pre_heat[0]+Start_up[0]+P_car_prop[0]+Steer_ex[0])
+#    p13 = plt.bar(ind, Airco_ex[0], width, bottom=EGTS[0]+Pre_heat[0]+Start_up[0]+P_car_prop[0]+Steer_ex[0]+Sensors[0])
 
 
     # Annotations
     max_bar = EGTS[0]+P_car_prop[0]+Pre_heat[0]+Airco_ex[0]+Start_up[0]+Steer_ex[0]+Sensors[0]
 
-    plt.annotate(round(max_bar[0], 2), xy=(ind[0], max_bar[0]), xytext=(ind[0]-0.15, max_bar[0]+10), )
-    plt.annotate(round(max_bar[1], 2), xy=(ind[1], max_bar[1]), xytext=(ind[1]-0.15, 62+10), )
-
-    # plt.yticks(np.arange(0, 3001, 150))
-    plt.ylabel('Power [kW]')
-    plt.title('Power Usage Different Cases')
-    plt.xticks(ind, ('Power\n ICO \n External VEH', 'Power \n ICO \n APU Only'))
-    plt.legend((p0[0], p1[0], p2[0], p10[0], p11[0], p12[0], p13[0]),
-               ("APU available", EGTS[1], Pre_heat[1], P_car_prop[1], Steer_ex[1], Sensors[1], Airco_ex[1]),
-               loc='center left', bbox_to_anchor=(1., 0.5))
-
-
-    plt.annotate('For \nAircraft', (0.175, (EGTS[0]+Pre_heat[0])[0]/2),
-                (0.4, (EGTS[0]+Pre_heat[0])[0]/2),
-                ha="center", va="center",
-                size=14,
-                arrowprops=dict(arrowstyle='-[, widthB='+str((EGTS[0]+Pre_heat[0])[0]*0.0055),
-                                shrinkA=5,
-                                shrinkB=5,
-                                fc="k", ec="k",
-                                ),
-                bbox=dict(boxstyle="square", fc="w"), rotation=-90)
-
-
-    fig.savefig('Total_Power_Sys_Dist', bbox_inches='tight')
-    plt.show()
+#    plt.annotate(round(max_bar[0], 2), xy=(ind[0], max_bar[0]), xytext=(ind[0]-0.15, max_bar[0]+10), )
+#    plt.annotate(round(max_bar[1], 2), xy=(ind[1], max_bar[1]), xytext=(ind[1]-0.15, 62+10), )
+#
+#    # plt.yticks(np.arange(0, 3001, 150))
+#    plt.ylabel('Power [kW]')
+#    plt.title('Power Usage Different Cases')
+#    plt.xticks(ind, ('Power\n ICO \n External VEH', 'Power \n ICO \n APU Only'))
+#    plt.legend((p0[0], p1[0], p2[0], p10[0], p11[0], p12[0], p13[0]),
+#               ("APU available", EGTS[1], Pre_heat[1], P_car_prop[1], Steer_ex[1], Sensors[1], Airco_ex[1]),
+#               loc='center left', bbox_to_anchor=(1., 0.5))
+#
+#
+#    plt.annotate('For \nAircraft', (0.175, (EGTS[0]+Pre_heat[0])[0]/2),
+#                (0.4, (EGTS[0]+Pre_heat[0])[0]/2),
+#                ha="center", va="center",
+#                size=14,
+#                arrowprops=dict(arrowstyle='-[, widthB='+str((EGTS[0]+Pre_heat[0])[0]*0.0055),
+#                                shrinkA=5,
+#                                shrinkB=5,
+#                                fc="k", ec="k",
+#                                ),
+#                bbox=dict(boxstyle="square", fc="w"), rotation=-90)
+#
+#
+#    fig.savefig('Total_Power_Sys_Dist', bbox_inches='tight')
+#    #plt.show()
     pass
 
 
@@ -654,18 +654,24 @@ gearing_ratio_EGTS = 19  # [-] Gearing ration for the EGTS drive train
 gearing_ratio_car = 5    # [-] Gearing ration for the vehicle  drive train
 n_circuit = 0.97
 
+
 #  NOTE: a[0] is not part of the profile and just for the plots!!!!!
-a = np.array([0.7,
-              0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7,
-              0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7, 0.7,
-              0.65, 0.65, 0.65, 0.65, 0.65, 0.65, 0.65, 0.65, 0.59, 0.59, 0.59, 0.59, 0.57, 0.57, 0.55, 0.55, 0.5,
-              0.5, 0.5, 0.5, 0.5, 0.5, 0.47, 0.47, 0.47, 0.47, 0.45, 0.45, 0.43, 0.43, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4,
-              0.4, 0.4, 0.37, 0.37, 0.37, 0.37, 0.37, 0.37, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.32,
-              0.32, 0.32, 0.32, 0.32, 0.32, 0.32, 0.32, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.27, 0.27, 0.27, 0.27,
-              0.27, 0.27, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25, 0.25])
+a = np.array([0.7 , 0.7 , 0.7 , 0.7 , 0.7 , 0.7 , 0.7 , 0.7 , 0.7 , 0.7 , 0.7 , 0.7 ,
+ 0.7 , 0.7 , 0.7 , 0.7 , 0.7 , 0.7 , 0.7 , 0.7 , 0.7 , 0.7 , 0.7 , 0.7 ,
+ 0.7 , 0.7 , 0.7 , 0.7 , 0.7 , 0.7 , 0.7 , 0.7 , 0.7 , 0.7 , 0.7 , 0.7 ,
+ 0.7 , 0.7 , 0.7 , 0.7 , 0.7 , 0.65, 0.65, 0.65, 0.65, 0.65, 0.65, 0.65,
+ 0.65, 0.59, 0.59, 0.59, 0.59, 0.57, 0.57, 0.55, 0.55, 0.5 , 0.5 , 0.5 ,
+ 0.5 , 0.5 , 0.5 , 0.47, 0.47, 0.47, 0.47, 0.45, 0.45, 0.43, 0.43, 0.4 ,
+ 0.4 , 0.4 , 0.4 , 0.4 , 0.4 , 0.4 , 0.4 , 0.37, 0.37, 0.37, 0.37, 0.37,
+ 0.37, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.35, 0.32, 0.32, 0.32,
+ 0.32, 0.32, 0.32, 0.32, 0.32, 0.3 , 0.3 , 0.3 , 0.3 , 0.3 , 0.3 , 0.3 ,
+ 0.3 , 0.27, 0.27, 0.27, 0.27, 0.27, 0.27, 0.25, 0.25, 0.25, 0.25, 0.25,
+ 0.25, 0.25, 0.25, 0.25, 0.25] )
 # [m/s^2]Wanted acceleration for complete sys
 
 step = 4  # chose the amount of intervals per second corresponding to the chosen acceleration profile
+
+
 
 # ---------------------------------------------------- Calculations ----------------------------------------------------
 t = np.arange(0, len(a)/step, 1/step)  # [s] List of time intervals
@@ -713,7 +719,7 @@ P_egts_w_stat, P_car_w_stat_1, P_car_w_stat_2 = static_power(v, t, power_ratio)
 print(" Entire System Performance Characteristics ".center(120, '#'))
 print('\n \t\tMaximum Velocity: {v}\t Maximum Acceleration: {a}'.format(v=v[-1], a=max(a)))
 print(' \t\t\t0 -> {v} in {t} seconds'.format(v=round(v[-1], 2), t=t[-1]))
-print(' \t\t\tAcceleration greater or equal to jet taxi: 0 -> {v}'.format(v=round(v[np.where(a>=0.7)[0][-1]], 3)))
+#print(' \t\t\tAcceleration greater or equal to jet taxi: 0 -> {v}'.format(v=round(v[np.where(a>=0.7)[0][-1]], 3)))
 print("Arrays".center(120, '-'))
 print("Acceleration: \n  \t", np.array2string(np.array(a), precision=15, separator=', '), "\n")
 print("Velocity: \n  \t", np.array2string(np.array(v), precision=4, separator=', '), "\n")

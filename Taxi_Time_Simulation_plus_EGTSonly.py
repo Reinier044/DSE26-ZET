@@ -7,10 +7,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 from Pushback import taxiway, taxiwayid, V_fin_segment, choose_2,choose
 from Performance_Data import a_ZET,v_ZET,Pa_ZET,Pv_ZET,d_ZET,a_eng,max_d_eng,max_v_eng,dt,thrustsetting,power_cp,Jet_A1_sp_e
+
 #define route "long" for limit case, "short" for performance check.
+
+V_fin_segment = 10
 
 ZETcolor = '#0000fc'
 CONVcolor = '#8d8d91'
+EGTScolor = '#33ccff'
 # --------------------Code-ZET----------------------
 print('Calculating RETS taxi -',choose_2,choose,'route.')
 # Simulation parameters
@@ -489,7 +493,7 @@ if choose_2 == 'out':
     
     tarray = np.append(tarray_pb_CONV,tarray+tarray_pb_CONV[-1])
     tarray = np.append(tarray,(tarray_fin+tarray[-1]))
-    aarray = np.append(-aarray_pb_CONV,aarray)
+    aarray = np.append(aarray_pb_CONV,aarray)
     aarray = np.append(aarray,aarray_fin)
     varray = np.append(-varray_pb_CONV,varray)
     varray = np.append(varray,varray_fin)
@@ -503,22 +507,233 @@ elif choose_2 == 'in':
     aarray = np.append(aarray,aarray_fin)
     varray = np.append(varray,varray_fin)
     sarray = np.append(sarray,(sarray[-1]+sarray_fin))
+
+CONVtarray = tarray
+CONVvarray = varray
+CONVsarray = sarray
+CONVaarray = aarray
+
+
+#---------------------EGTS only---------------------------
+print('Calculating RETS-EGTS taxi -',choose_2,choose,'route.')
+from Pushback_EGTSonly import taxiway, taxiwayid, V_fin_segment, choose_2,choose
+from Pushback_EGTSonly import a_ZET,v_ZET
+# Simulation parameters
+t = 0               # Starting time
+
+# Initial conditions
+v = 0               # Starting velocity
+s = 0               # Starting distance
+e = 0               # Starting energy
+ind = 0             # Index value
+
+# Storing arrays
+tarray = np.array([0])
+sarray = np.array([0])
+varray = np.array([0.0000001])
+aarray = np.array([a_ZET[0]])
+parray = np.array([])
+earray = np.array([])
+status_array = np.array([taxiwayid[0]])
+
+# Simulation
+# Only works when you start with straight distance, otherwise we need small modification
+for i in range(len(taxiwayid)):
     
+    if taxiwayid[i] == 'st':                                    # If we have straight part
+
+        #print('The ', i, 'th part is a straight part')
+        indstart = ind                                          # Starting index in while loop
+        v = varray[indstart]                                    # Starting velocity in straight part
+
+        while s < taxiway[0][i] + sarray[indstart]:             #Needed distance covered [m]
+
+            for j in range(len(v_ZET)):
+                if v>v_ZET[j] and v<=v_ZET[j+1]:
+                    a = a_ZET[j]
+                    break
+
+            v = v + a * dt
+
+            if v > v_ZET[-1]:                                   # It can never exceed maximum speed
+                v = v_ZET[-1]
+                a = 0                                           # If maximum speed is achieved, a = 0
+                
+            s = s + v * dt
+            t = t + dt
+            ind = ind + 1
+
+            # Appending values to arrays
+            tarray = np.append(tarray, t)
+            sarray = np.append(sarray, s)
+            varray = np.append(varray, v)
+            aarray = np.append(aarray, a)
+            status_array = np.append(status_array,taxiwayid[i])
+
+        if i == len(taxiwayid)-1:                 # This is the last part, so no upcoming turn
+            v_cr = V_fin_segment                          # Last straight part, make sure max 10 kts, change?
+        else:                                     # After straight part, always a turn!
+            v_cr = taxiway[1][i+1]                # Velocity in turn is dependant on turn coming
+
+        if v > v_cr:            # If velocity at end of straight part is too high
+
+            # Braking
+            t_braking = (v_cr - v) / d_ZET
+
+            indnew = ind - int(round(t_braking / dt))  # Go back in time-> this is the index where we will start braking
+
+            if indnew < 0:  # Added after performing verification for high accelerations
+                indnew = 0
+
+            v = varray[indnew]  # Starting value in this while loop
+            s = sarray[indnew]  # Starting value in this while loop
+            t = tarray[indnew]  # Starting value in this while loop
+
+            while sarray[indnew] <= taxiway[0][i] + sarray[indstart]:  # Of course we still need to cover all distances
+
+                if v < v_cr:                #If velocity is still smaller than v_cr, room to accelerate to v_cr
+
+                    for j in range(len(v_ZET)):                         #Find acceleration at which we can accelerate
+                        if v > v_ZET[j] and v <= v_ZET[j + 1]:
+                            a = a_ZET[j]
+                            break
+
+                    v = v + a * dt
+
+                    if v>v_cr: # For now, as first order estimate, if we brake sufficiently a small part has a velocity of v_cr before turn
+                        v = v_cr
+                        a = 0
+
+                if v > v_cr:
+                    a = d_ZET
+                    v = v + a * dt
+
+                    if v<v_cr:
+                        v = v_cr
+                        a = 0
+
+                if v == v_cr:
+                    a = 0
+
+                s = s + v * dt
+                t = t + dt
+
+                indnew = indnew + 1
+
+                # This part is made for the fact that when you brake, you take longer to cover distance, therefore extra taxi time is induced
+                if indnew <= ind:
+                    varray[indnew] = v
+                    sarray[indnew] = s
+                    tarray[indnew] = t
+                    aarray[indnew] = a
+                if indnew > ind:
+                    tarray = np.append(tarray, t)
+                    sarray = np.append(sarray, s)
+                    varray = np.append(varray, v)
+                    aarray = np.append(aarray, a)
+                    status_array = np.append(status_array,taxiwayid[i])
+
+            ind = indnew  # Correction for extra time
+
+        
+    if taxiwayid[i] == 'cr':  # If we have a corner
+        indstart = ind  # Starting index in while loop
+
+        v = varray[indstart]  # Starting velocity in the turn
+
+        if i == len(taxiwayid)-1:                 # This is the last part, so no upcoming turn
+            v_cr = V_fin_segment                          # Last straight part, make sure max 10 kts, change?
+        else:                                     # After straight part, always a turn!
+            v_cr = taxiway[1][i]                  # Velocity in turn is dependant on turn coming
+
+        while s < (taxiway[0][i] + sarray[indstart]):
+
+            if v >= v_cr:  # If v >= v_cr than constant velocity in turn
+                v = v_cr
+                s = s + v * dt
+                a = 0
+            if v < v_cr:  # If velocity is slower than v_cr, room to accellerate in turn
+
+                for j in range(len(v_ZET)):
+                    if v > v_ZET[j-1] and v <= v_ZET[j]:
+                        a = a_ZET[j]
+                        break
+
+                v = v + a * dt
+                s = s + v * dt
+
+            t = t + dt
+            ind = ind + 1
+
+            tarray = np.append(tarray, t)
+            sarray = np.append(sarray, s)
+            varray = np.append(varray, v)
+            aarray = np.append(aarray, a)
+            status_array = np.append(status_array,taxiwayid[i])
+       
+    
+       
+if choose_2 == 'out':     
+    print('Adding pushback and coupling for RETS-EGTS')
+    #Implement pushback phase at beginning.
+    from Pushback_EGTSonly import tarray_pb,aarray_pb,varray_pb,sarray_pb,status_array_pb
+    from Pushback_EGTSonly import tarray_cp_ZET,aarray_cp_ZET,varray_cp_ZET,sarray_cp_ZET,status_array_cp_ZET
+    
+    
+    tarray = np.append(tarray_pb,(tarray+tarray_pb[-1]))
+    tarray = np.append(tarray,(tarray[-1]+tarray_cp_ZET))
+    aarray = np.append(aarray_pb,aarray)
+    aarray = np.append(aarray,aarray_cp_ZET)
+    varray = np.append(-varray_pb,varray)
+    varray = np.append(varray,varray_cp_ZET)
+    sarray = np.append(-sarray_pb[::-1],sarray)
+    sarray = np.append(sarray,(sarray_cp_ZET+sarray[-1]))
+    status_array = np.append(status_array_pb,status_array)
+    status_array = np.append(status_array,status_array_cp_ZET)
+    print('time added: ',tarray_pb[-1]+tarray_cp_ZET[-1])
+    
+elif choose_2 == 'in':
+    print('Adding coupling for RETS-EGTS')
+    #Implement pushback phase at beginning.
+    from Pushback import tarray_cp_ZET,aarray_cp_ZET,varray_cp_ZET,sarray_cp_ZET,status_array_cp_ZET
+    from Pushback import tarray_fin,varray_fin,sarray_fin,aarray_fin,status_array_fin
+    tarray = np.append(tarray_cp_ZET,tarray+tarray_cp_ZET[-1])
+    aarray = np.append(aarray_cp_ZET,aarray)
+    varray = np.append(varray_cp_ZET,varray)
+    sarray = np.append(sarray_cp_ZET,sarray)
+    tarray = np.append(tarray,(tarray[-1]+tarray_fin))
+    aarray = np.append(aarray,aarray_fin)
+    varray = np.append(varray,varray_fin)
+    sarray = np.append(sarray,(sarray[-1]+sarray_fin))
+    status_array = np.append(status_array_cp_ZET,status_array)
+    status_array = np.append(status_array,status_array_fin)
+    
+    
+EGTStarray = tarray
+EGTSvarray = varray
+EGTSsarray = sarray
+EGTSaarray = aarray
+
+
+
+
+
+
 print('creating figures')   
 
 #make graphs 
-plt.figure()
-plt.subplot(211)
-plt.plot(ZETtarray, parray, color = '#ed7b00')
-plt.plot(ZETtarray, ZETvarray*70, color = '#5c9160')
-plt.xlabel('Time [s]')
-plt.ylabel('Power [kW]',)
-plt.subplot(212)
-plt.plot(ZETtarray, earray)
-plt.xlabel('Time [s]')
-plt.ylabel('energy [J]')
-plt.tight_layout() 
-plt.show()
+#plt.figure()
+#plt.subplot(211)
+#plt.plot(ZETtarray, parray, color = '#ed7b00')
+#plt.plot(ZETtarray, ZETvarray*70, color = '#5c9160')
+#plt.xlabel('Time [s]')
+#plt.ylabel('Power [kW]',)
+#plt.subplot(212)
+#plt.plot(ZETtarray, earray)
+#plt.xlabel('Time [s]')
+#plt.ylabel('energy [J]')
+#plt.tight_layout() 
+#plt.show()
 
 #fig, ax1 = plt.subplots()
 #
@@ -542,74 +757,77 @@ plt.show()
 plt.figure()
 plt.subplot(311)
 plt.plot(ZETtarray,ZETvarray, label = "RETS", color = ZETcolor)
-plt.plot(tarray, varray, label = "Conventional", color = CONVcolor)
+plt.plot(CONVtarray, CONVvarray, label = "Conventional", color = CONVcolor)
+plt.plot(EGTStarray, EGTSvarray, label = 'Internal only', color = EGTScolor)
 plt.xlabel('Time [s]')
 plt.ylabel('Velocity [m/s]')
 plt.legend()
 plt.subplot(312)
 plt.plot(ZETtarray,ZETsarray, label = "RETS", color = ZETcolor)
-plt.plot(tarray, sarray,label = "Conventional", color = CONVcolor)
+plt.plot(CONVtarray, CONVsarray,label = "Conventional", color = CONVcolor)
+plt.plot(EGTStarray, EGTSsarray, label = 'Internal only', color = EGTScolor)
 plt.xlabel('Time [s]')
 plt.ylabel('Distance [m]')
 plt.legend()
 plt.subplot(313)
 plt.plot(ZETtarray,ZETaarray, label = "RETS", color = ZETcolor)
-plt.plot(tarray, aarray, label = "Conventional", color = CONVcolor)
+plt.plot(CONVtarray, CONVaarray, label = "Conventional", color = CONVcolor)
+plt.plot(EGTStarray, EGTSaarray, label = 'Internal only', color = EGTScolor)
 plt.xlabel('Time [s]')
 plt.ylabel('Acceleration [$m/s^2$]')
 plt.legend()
 plt.tight_layout() 
 plt.show()
 
-plt.figure()
-plt.subplot(211)
-plt.plot(ZETtarray,ZETvarray, label = "RETS", color = ZETcolor)
-plt.plot(tarray, varray, label = "Conventional", color = CONVcolor)
-plt.xlabel('Time [s]')
-plt.ylabel('Velocity [m/s]')
-plt.legend()
-plt.subplot(212)
-plt.plot(ZETtarray,ZETsarray, label = "RETS", color = ZETcolor)
-plt.plot(tarray, sarray,label = "Conventional", color = CONVcolor)
-plt.xlabel('Time [s]')
-plt.ylabel('Distance [m]')
-plt.legend()
-plt.tight_layout() 
-plt.plot()
-plt.show()
+#plt.figure()
+#plt.subplot(211)
+#plt.plot(ZETtarray,ZETvarray, label = "RETS", color = ZETcolor)
+#plt.plot(CONVtarray, CONVvarray, label = "Conventional", color = CONVcolor)
+#plt.xlabel('Time [s]')
+#plt.ylabel('Velocity [m/s]')
+#plt.legend()
+#plt.subplot(212)
+#plt.plot(ZETtarray,ZETsarray, label = "RETS", color = ZETcolor)
+#plt.plot(CONVtarray, CONVsarray,label = "Conventional", color = CONVcolor)
+#plt.xlabel('Time [s]')
+#plt.ylabel('Distance [m]')
+#plt.legend()
+#plt.tight_layout() 
+#plt.plot()
+#plt.show()
 
 
-
-fig, ax1 = plt.subplots()
-
-color = '#d10007'
-ax1.set_xlabel('time (s)')
-ax1.set_ylabel('power [kW]', )
-ax1.plot(ZETtarray, parray, color= color)
-ax1.tick_params(axis='y', labelcolor= color)
-
-ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
-
-color = '#ffbc03'
-ax2.set_ylabel('energy [MJ]')  # we already handled the x-label with ax1
-ax2.plot(ZETtarray, (earray/1000000), color = color)
-ax2.tick_params(axis='y', labelcolor=color)
-
-fig.tight_layout()  # otherwise the right y-label is slightly clipped
-plt.show()
-
+#
+#fig, ax1 = plt.subplots()
+#
+#color = '#d10007'
+#ax1.set_xlabel('time (s)')
+#ax1.set_ylabel('power [kW]', )
+#ax1.plot(ZETtarray, parray, color= color)
+#ax1.tick_params(axis='y', labelcolor= color)
+#
+#ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+#
+#color = '#ffbc03'
+#ax2.set_ylabel('energy [MJ]')  # we already handled the x-label with ax1
+#ax2.plot(ZETtarray, (earray/1000000), color = color)
+#ax2.tick_params(axis='y', labelcolor=color)
+#
+#fig.tight_layout()  # otherwise the right y-label is slightly clipped
+#plt.show()
+#
 
 
 
 
 if ZETtarray[-1]> tarray[-1]:
-    print("RETS is ", ZETtarray[-1]-tarray[-1], "seconds slower, at a duration of", ZETtarray[-1],"seconds")
-    
+    print("RETS is ", ZETtarray[-1]-CONVtarray[-1], "seconds slower, at a duration of", ZETtarray[-1],"seconds")
+    print('Internal is', EGTStarray[-1]-CONVtarray[-1],"seconds slower at a duration of", EGTStarray[-1],"seconds")
 if ZETtarray[-1]<tarray[-1]:
-    print("RETS is ", tarray[-1]-ZETtarray[-1], "seconds faster at a duration of", ZETtarray[-1],"seconds")
- 
-
-print('Total energy of cycle: ', earray[-1] ,'Joules')
+    print("RETS is ", CONVtarray[-1]-ZETtarray[-1], "seconds faster at a duration of", ZETtarray[-1],"seconds")
+    print('Internal is', CONVtarray[-1]-EGTStarray[-1],"seconds slower at a duration of", EGTStarray[-1],"seconds")
+#
+#print('Total energy of cycle: ', earray[-1] ,'Joules')
 #print('Equivalent kilograms fuel:', (earray[-1]/1000000)/Jet_A1_sp_e)
 
 
@@ -636,4 +854,3 @@ print('Total energy of cycle: ', earray[-1] ,'Joules')
 #    
 #print('average acceleration CONV:', tot_a/tot_t)
 #print('avg speed CONV:', sum(varray)/len(varray))
-
